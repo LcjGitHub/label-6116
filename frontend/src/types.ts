@@ -49,6 +49,12 @@ export interface HarvestRecordFormValues {
   remark: string;
 }
 
+export interface UpdateHarvestRecordPayload {
+  actual_harvest_date: string;
+  harvest_weight: number;
+  remark?: string;
+}
+
 export interface CropDistribution {
   crop_name: string;
   count: number;

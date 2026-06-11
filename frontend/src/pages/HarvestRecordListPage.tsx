@@ -4,6 +4,7 @@ import {
   Container,
   Group,
   Loader,
+  Modal,
   NumberInput,
   Paper,
   Select,
@@ -17,10 +18,10 @@ import { DateInput } from '@mantine/dates';
 import { useDebouncedValue } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconRefresh, IconTrash } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
-import { createHarvestRecord, deleteHarvestRecord, fetchHarvestRecords, fetchPlots } from '../api/client';
+import { createHarvestRecord, deleteHarvestRecord, fetchHarvestRecords, fetchPlots, updateHarvestRecord } from '../api/client';
 import { useHarvestFilterStore } from '../store/harvestFilterStore';
 import type { HarvestRecord as HarvestRecordType, HarvestRecordFormValues, Plot } from '../types';
 
@@ -36,6 +37,32 @@ export function HarvestRecordListPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<HarvestRecordType | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const editForm = useForm<HarvestRecordFormValues>({
+    initialValues: {
+      plot_id: null,
+      actual_harvest_date: null,
+      harvest_weight: null,
+      remark: '',
+    },
+    validate: {
+      plot_id: (value) => (value ? null : '请选择地块'),
+      actual_harvest_date: (value) => (value ? null : '请选择实际收获日期'),
+      harvest_weight: (value) => {
+        if (value === null || value === undefined) {
+          return '请输入收获重量';
+        }
+        if (value <= 0) {
+          return '收获重量必须大于0';
+        }
+        return null;
+      },
+    },
+  });
 
   const [debouncedPlotId] = useDebouncedValue(plotId, 300);
   const [debouncedStartDate] = useDebouncedValue(startDate, 300);
@@ -116,6 +143,65 @@ export function HarvestRecordListPage() {
       setDeletingId(null);
     }
   };
+
+  const handleOpenEdit = useCallback((record: HarvestRecordType) => {
+    setEditingRecord(record);
+    editForm.setValues({
+      plot_id: record.plot_id,
+      actual_harvest_date: dayjs(record.actual_harvest_date).toDate(),
+      harvest_weight: record.harvest_weight,
+      remark: record.remark || '',
+    });
+    editForm.resetDirty();
+    setEditModalOpen(true);
+  }, [editForm]);
+
+  const handleCloseEdit = useCallback(() => {
+    setEditModalOpen(false);
+    setEditingRecord(null);
+    editForm.reset();
+  }, [editForm]);
+
+  const handleEditSubmit = useCallback(async (values: HarvestRecordFormValues) => {
+    if (!editingRecord) return;
+    setEditSubmitting(true);
+    try {
+      await updateHarvestRecord(editingRecord.id, {
+        actual_harvest_date: dayjs(values.actual_harvest_date).format('YYYY-MM-DD'),
+        harvest_weight: values.harvest_weight!,
+        remark: values.remark.trim() || undefined,
+      });
+      notifications.show({
+        title: '编辑成功',
+        message: '收获记录已更新',
+        color: 'green',
+      });
+      setEditModalOpen(false);
+      setEditingRecord(null);
+      editForm.reset();
+      await loadRecords();
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        err.response &&
+        typeof err.response === 'object' &&
+        'data' in err.response &&
+        err.response.data &&
+        typeof err.response.data === 'object' &&
+        'error' in err.response.data
+          ? String(err.response.data.error)
+          : '更新失败，请稍后重试';
+      notifications.show({
+        title: '编辑失败',
+        message,
+        color: 'red',
+      });
+    } finally {
+      setEditSubmitting(false);
+    }
+  }, [editingRecord, editForm, loadRecords]);
 
   const handleSubmit = async (values: HarvestRecordFormValues) => {
     setSubmitting(true);
@@ -295,7 +381,7 @@ export function HarvestRecordListPage() {
                   <Table.Th>实际收获日期</Table.Th>
                   <Table.Th>收获重量(公斤)</Table.Th>
                   <Table.Th>备注</Table.Th>
-                  <Table.Th w={80}>操作</Table.Th>
+                  <Table.Th w={140}>操作</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -307,15 +393,26 @@ export function HarvestRecordListPage() {
                     <Table.Td>{record.harvest_weight.toFixed(1)}</Table.Td>
                     <Table.Td>{record.remark || '-'}</Table.Td>
                     <Table.Td>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        aria-label="删除"
-                        loading={deletingId === record.id}
-                        onClick={() => handleDelete(record.id)}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
+                      <Group gap="xs">
+                        <ActionIcon
+                          variant="subtle"
+                          color="orange"
+                          aria-label="编辑"
+                          title="编辑收获记录"
+                          onClick={() => handleOpenEdit(record)}
+                        >
+                          <IconPencil size={16} />
+                        </ActionIcon>
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          aria-label="删除"
+                          loading={deletingId === record.id}
+                          onClick={() => handleDelete(record.id)}
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Group>
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -324,6 +421,63 @@ export function HarvestRecordListPage() {
           )}
         </Paper>
       </Stack>
+
+      <Modal
+        opened={editModalOpen}
+        onClose={handleCloseEdit}
+        title="编辑收获记录"
+        size="sm"
+      >
+        <form onSubmit={editForm.onSubmit(handleEditSubmit)}>
+          <Stack gap="md">
+            <Select
+              label="地块"
+              placeholder="选择地块"
+              data={plotOptions}
+              withAsterisk
+              searchable
+              disabled
+              {...editForm.getInputProps('plot_id', {
+                type: 'input',
+              })}
+              value={editForm.values.plot_id ? String(editForm.values.plot_id) : null}
+              onChange={(value) => editForm.setFieldValue('plot_id', value ? Number(value) : null)}
+            />
+            <Group grow>
+              <DateInput
+                label="实际收获日期"
+                placeholder="选择收获日期"
+                valueFormat="YYYY-MM-DD"
+                withAsterisk
+                {...editForm.getInputProps('actual_harvest_date')}
+              />
+              <NumberInput
+                label="收获重量(公斤)"
+                placeholder="请输入收获重量"
+                min={0.1}
+                step={0.1}
+                withAsterisk
+                {...editForm.getInputProps('harvest_weight')}
+              />
+            </Group>
+            <Textarea
+              label="备注"
+              placeholder="选填，可输入收获备注信息"
+              autosize
+              minRows={2}
+              {...editForm.getInputProps('remark')}
+            />
+            <Group justify="flex-end" mt="sm">
+              <Button variant="subtle" onClick={handleCloseEdit}>
+                取消
+              </Button>
+              <Button type="submit" loading={editSubmitting}>
+                保存修改
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Modal>
     </Container>
   );
 }

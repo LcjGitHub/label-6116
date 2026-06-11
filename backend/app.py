@@ -196,6 +196,25 @@ def create_harvest_record():
     return jsonify(record.to_dict()), 201
 
 
+@app.route("/api/harvest-records/<int:record_id>", methods=["PUT"])
+def update_harvest_record(record_id):
+    record = db.session.get(HarvestRecord, record_id)
+    if not record:
+        return jsonify({"error": "收获记录不存在"}), 404
+
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_harvest_payload(data, partial=True)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    for key, value in payload.items():
+        setattr(record, key, value)
+
+    db.session.commit()
+    return jsonify(record.to_dict())
+
+
 @app.route("/api/harvest-records/<int:record_id>", methods=["DELETE"])
 def delete_harvest_record(record_id):
     record = db.session.get(HarvestRecord, record_id)

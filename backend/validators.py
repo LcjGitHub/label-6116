@@ -117,45 +117,51 @@ def validate_batch_delete_payload(data):
     return parsed_ids
 
 
-def validate_harvest_payload(data):
-    """校验收获记录创建的载荷数据。
+def validate_harvest_payload(data, partial=False):
+    """校验收获记录创建或更新的载荷数据。
 
     Args:
         data: 包含收获记录信息的字典数据。
+        partial: 是否为部分更新模式。True 时只校验 data 中存在的字段，
+            False 时校验所有必填字段。
 
     Returns:
-        dict: 经过清洗和校验的收获记录数据字典，可直接用于创建 HarvestRecord 模型。
+        dict: 经过清洗和校验的收获记录数据字典，可直接用于创建或更新 HarvestRecord 模型。
 
     Raises:
         ValueError: 当必填字段缺失、字段格式错误或关联地块不存在时抛出。
     """
     required_fields = ["plot_id", "actual_harvest_date", "harvest_weight"]
-    missing = [field for field in required_fields if data.get(field) is None]
-    if missing:
-        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+    if not partial:
+        missing = [field for field in required_fields if data.get(field) is None]
+        if missing:
+            raise ValueError(f"缺少必填字段: {', '.join(missing)}")
 
     payload = {}
 
-    try:
-        payload["plot_id"] = int(data.get("plot_id"))
-    except (ValueError, TypeError):
-        raise ValueError("地块编号格式错误")
+    if "plot_id" in data or not partial:
+        try:
+            payload["plot_id"] = int(data.get("plot_id"))
+        except (ValueError, TypeError):
+            raise ValueError("地块编号格式错误")
 
-    plot = db.session.get(Plot, payload["plot_id"])
-    if not plot:
-        raise ValueError("关联地块不存在")
+        plot = db.session.get(Plot, payload["plot_id"])
+        if not plot:
+            raise ValueError("关联地块不存在")
 
-    payload["actual_harvest_date"] = parse_date(data.get("actual_harvest_date"), "实际收获日期")
+    if "actual_harvest_date" in data or not partial:
+        payload["actual_harvest_date"] = parse_date(data.get("actual_harvest_date"), "实际收获日期")
 
-    try:
-        payload["harvest_weight"] = float(data.get("harvest_weight"))
-        if payload["harvest_weight"] <= 0:
-            raise ValueError
-    except (ValueError, TypeError):
-        raise ValueError("收获重量必须为大于0的数字")
+    if "harvest_weight" in data or not partial:
+        try:
+            payload["harvest_weight"] = float(data.get("harvest_weight"))
+            if payload["harvest_weight"] <= 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise ValueError("收获重量必须为大于0的数字")
 
-    remark = data.get("remark")
-    if remark is not None:
+    if "remark" in data:
+        remark = data.get("remark")
         payload["remark"] = str(remark).strip() or None
 
     return payload

@@ -12,6 +12,7 @@ import type {
   SeverityLevel,
   Statistics,
   TreatmentStatus,
+  UpdateHarvestRecordPayload,
   UpdatePlotPayload,
 } from '../types';
 
@@ -75,6 +76,11 @@ export async function createHarvestRecord(payload: {
 
 export async function deleteHarvestRecord(id: number): Promise<void> {
   await api.delete(`/harvest-records/${id}`);
+}
+
+export async function updateHarvestRecord(id: number, payload: UpdateHarvestRecordPayload): Promise<HarvestRecord> {
+  const { data } = await api.put<HarvestRecord>(`/harvest-records/${id}`, payload);
+  return data;
 }
 
 export async function fetchStatistics(): Promise<Statistics> {
