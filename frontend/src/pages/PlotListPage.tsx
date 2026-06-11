@@ -60,6 +60,7 @@ export function PlotListPage() {
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [cropOptions, setCropOptions] = useState<string[]>([]);
+  const [cropLoadError, setCropLoadError] = useState<string | null>(null);
   const [cropSearch, setCropSearch] = useState('');
   const editCombobox = useCombobox();
 
@@ -131,11 +132,14 @@ export function PlotListPage() {
     });
     editForm.resetDirty();
     setEditModalOpen(true);
+    setCropLoadError(null);
     try {
       const crops = await fetchCrops();
       setCropOptions(crops.map((c: Crop) => c.name));
+      setCropLoadError(null);
     } catch {
       setCropOptions([]);
+      setCropLoadError('加载作物列表失败，请确认后端服务已启动');
     }
   }, [editForm]);
 
@@ -251,7 +255,7 @@ export function PlotListPage() {
                   <Table.Th w={100}>状态</Table.Th>
                   <Table.Th>认领日期</Table.Th>
                   <Table.Th>预计收获日</Table.Th>
-                  <Table.Th w={140}>操作</Table.Th>
+                  <Table.Th w={180}>操作</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -319,6 +323,11 @@ export function PlotListPage() {
       >
         <form onSubmit={editForm.onSubmit(handleEditSubmit)}>
           <Stack gap="md">
+            {cropLoadError && (
+              <Text c="red" size="sm">
+                {cropLoadError}
+              </Text>
+            )}
             <TextInput
               label="地块编号"
               placeholder="例如 A-03"
