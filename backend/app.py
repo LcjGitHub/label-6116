@@ -257,6 +257,10 @@ def list_harvest_records():
         except ValueError:
             pass
 
+    plot_number = request.args.get("plot_number", "").strip()
+    if plot_number:
+        query = query.filter(Plot.plot_number == plot_number)
+
     start_date_str = request.args.get("start_date", "").strip()
     end_date_str = request.args.get("end_date", "").strip()
 

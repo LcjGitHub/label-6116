@@ -39,7 +39,7 @@ export async function updatePlot(id: number, payload: UpdatePlotPayload): Promis
   return data;
 }
 
-export async function fetchHarvestRecords(params?: { plot_id?: number; start_date?: string; end_date?: string }): Promise<HarvestRecord[]> {
+export async function fetchHarvestRecords(params?: { plot_id?: number; plot_number?: string; start_date?: string; end_date?: string }): Promise<HarvestRecord[]> {
   const { data } = await api.get<HarvestRecord[]>('/harvest-records', { params });
   return data;
 }

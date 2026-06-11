@@ -76,7 +76,11 @@ export function HarvestRecordListPage() {
   }, []);
 
   const loadRecords = useCallback(async () => {
-    if (startDateAfterEndDate) return;
+    if (startDateAfterEndDate) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -171,44 +175,41 @@ export function HarvestRecordListPage() {
         </Group>
 
         <Paper withBorder p="md" radius="md">
-          <Stack gap="md">
-            <Group align="flex-end" grow>
-              <Select
-                label="地块"
-                placeholder="选择地块筛选"
-                data={plotOptions}
-                value={plotId ? String(plotId) : null}
-                onChange={(value) => setPlotId(value ? Number(value) : null)}
-                clearable
-                searchable
-              />
-            </Group>
-            <Group align="flex-end" grow>
-              <DateInput
-                key={`start-${resetKey}`}
-                label="收获开始日期"
-                placeholder="选择开始日期"
-                valueFormat="YYYY-MM-DD"
-                value={startDate ? dayjs(startDate).toDate() : null}
-                onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
-                clearable
-                error={startDateAfterEndDate}
-              />
-              <DateInput
-                key={`end-${resetKey}`}
-                label="收获结束日期"
-                placeholder="选择结束日期"
-                valueFormat="YYYY-MM-DD"
-                value={endDate ? dayjs(endDate).toDate() : null}
-                onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
-                clearable
-                error={startDateAfterEndDate}
-              />
-              <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
-                重置
-              </Button>
-            </Group>
-          </Stack>
+          <Group align="flex-end" grow>
+            <Select
+              key={`plot-${resetKey}`}
+              label="地块"
+              placeholder="选择地块筛选"
+              data={plotOptions}
+              value={plotId ? String(plotId) : null}
+              onChange={(value) => setPlotId(value ? Number(value) : null)}
+              clearable
+              searchable
+            />
+            <DateInput
+              key={`start-${resetKey}`}
+              label="收获开始日期"
+              placeholder="选择开始日期"
+              valueFormat="YYYY-MM-DD"
+              value={startDate ? dayjs(startDate).toDate() : null}
+              onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+              clearable
+              error={startDateAfterEndDate}
+            />
+            <DateInput
+              key={`end-${resetKey}`}
+              label="收获结束日期"
+              placeholder="选择结束日期"
+              valueFormat="YYYY-MM-DD"
+              value={endDate ? dayjs(endDate).toDate() : null}
+              onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+              clearable
+              error={startDateAfterEndDate}
+            />
+            <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
+              重置
+            </Button>
+          </Group>
         </Paper>
 
         {startDateAfterEndDate && (
