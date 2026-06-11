@@ -155,6 +155,46 @@ def delete_plot(plot_id):
     return jsonify({"message": "删除成功"})
 
 
+def validate_batch_delete_payload(data):
+    ids = data.get("ids")
+    if not ids or not isinstance(ids, list):
+        raise ValueError("缺少必填字段: ids（数组）")
+
+    if len(ids) == 0:
+        raise ValueError("删除列表不能为空")
+
+    parsed_ids = []
+    for idx in ids:
+        try:
+            parsed_id = int(idx)
+            if parsed_id <= 0:
+                raise ValueError
+            parsed_ids.append(parsed_id)
+        except (ValueError, TypeError):
+            raise ValueError(f"无效的编号: {idx}")
+
+    return parsed_ids
+
+
+@app.route("/api/plots/batch-delete", methods=["POST"])
+def batch_delete_plots():
+    data = request.get_json(silent=True) or {}
+    try:
+        ids = validate_batch_delete_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    deleted_count = 0
+    for plot_id in ids:
+        plot = db.session.get(Plot, plot_id)
+        if plot:
+            db.session.delete(plot)
+            deleted_count += 1
+
+    db.session.commit()
+    return jsonify({"message": f"成功删除 {deleted_count} 条记录", "deleted_count": deleted_count})
+
+
 def validate_harvest_payload(data):
     required_fields = ["plot_id", "actual_harvest_date", "harvest_weight"]
     missing = [field for field in required_fields if data.get(field) is None]

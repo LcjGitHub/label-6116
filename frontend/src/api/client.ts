@@ -29,6 +29,11 @@ export async function deletePlot(id: number): Promise<void> {
   await api.delete(`/plots/${id}`);
 }
 
+export async function batchDeletePlots(ids: number[]): Promise<{ message: string; deleted_count: number }> {
+  const { data } = await api.post<{ message: string; deleted_count: number }>('/plots/batch-delete', { ids });
+  return data;
+}
+
 export async function updatePlot(id: number, payload: UpdatePlotPayload): Promise<Plot> {
   const { data } = await api.put<Plot>(`/plots/${id}`, payload);
   return data;

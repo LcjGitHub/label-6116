@@ -2,6 +2,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Checkbox,
   Combobox,
   Container,
   Group,
@@ -25,7 +26,7 @@ import { IconFileText, IconPencil, IconPlus, IconRefresh, IconTrash } from '@tab
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deletePlot, fetchCrops, fetchPlots, updatePlot } from '../api/client';
+import { batchDeletePlots, deletePlot, fetchCrops, fetchPlots, updatePlot } from '../api/client';
 import { useFilterStore } from '../store/filterStore';
 import { PLOT_STATUSES } from '../types';
 import type { Crop, Plot, PlotFormValues, PlotStatus } from '../types';
@@ -56,6 +57,10 @@ export function PlotListPage() {
   const [deletingPlot, setDeletingPlot] = useState<Plot | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchDeleteModalOpen, setBatchDeleteModalOpen] = useState(false);
+  const [batchDeleteSubmitting, setBatchDeleteSubmitting] = useState(false);
+  const [batchDeleteError, setBatchDeleteError] = useState<string | null>(null);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
 
@@ -132,11 +137,63 @@ export function PlotListPage() {
       setDeleteModalOpen(false);
       setDeletingPlot(null);
       setDeleteError(null);
+      setSelectedIds((prev) => prev.filter((id) => id !== deletingPlot.id));
       await loadPlots();
     } catch {
       setDeleteError('删除失败，请稍后重试');
     } finally {
       setDeleteSubmitting(false);
+    }
+  };
+
+  const allSelected = plots.length > 0 && selectedIds.length === plots.length;
+  const indeterminate = selectedIds.length > 0 && selectedIds.length < plots.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(plots.map((plot) => plot.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((prevId) => prevId !== id));
+  };
+
+  const handleOpenBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    setBatchDeleteError(null);
+    setBatchDeleteModalOpen(true);
+  };
+
+  const handleCancelBatchDelete = () => {
+    setBatchDeleteModalOpen(false);
+    setBatchDeleteError(null);
+  };
+
+  const handleConfirmBatchDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setBatchDeleteError(null);
+    setBatchDeleteSubmitting(true);
+    try {
+      const result = await batchDeletePlots(selectedIds);
+      notifications.show({ title: '删除成功', message: result.message, color: 'green' });
+      setBatchDeleteModalOpen(false);
+      setSelectedIds([]);
+      setBatchDeleteError(null);
+      await loadPlots();
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err && err.response &&
+        typeof err.response === 'object' && 'data' in err.response && err.response.data &&
+        typeof err.response.data === 'object' && 'error' in err.response.data
+          ? String(err.response.data.error)
+          : '删除失败，请稍后重试';
+      setBatchDeleteError(message);
+    } finally {
+      setBatchDeleteSubmitting(false);
     }
   };
 
@@ -215,7 +272,19 @@ export function PlotListPage() {
     <Container size="lg" py="xl">
       <Stack gap="lg">
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
-          <Title order={2}>地块列表</Title>
+          <Group gap="md" align="center">
+            <Title order={2}>地块列表</Title>
+            {selectedIds.length > 0 && (
+              <Button
+                color="red"
+                variant="light"
+                leftSection={<IconTrash size={16} />}
+                onClick={handleOpenBatchDelete}
+              >
+                批量删除 ({selectedIds.length})
+              </Button>
+            )}
+          </Group>
           <Button component={Link} to="/register" leftSection={<IconPlus size={16} />}>
             认领登记
           </Button>
@@ -270,6 +339,14 @@ export function PlotListPage() {
             <Table striped highlightOnHover withTableBorder>
               <Table.Thead>
                 <Table.Tr>
+                  <Table.Th w={40}>
+                    <Checkbox
+                      checked={allSelected}
+                      indeterminate={indeterminate}
+                      onChange={(event) => handleSelectAll(event.currentTarget.checked)}
+                      aria-label="全选"
+                    />
+                  </Table.Th>
                   <Table.Th>地块编号</Table.Th>
                   <Table.Th>认领人</Table.Th>
                   <Table.Th>作物</Table.Th>
@@ -282,6 +359,13 @@ export function PlotListPage() {
               <Table.Tbody>
                 {plots.map((plot) => (
                   <Table.Tr key={plot.id}>
+                    <Table.Td>
+                      <Checkbox
+                        checked={selectedIds.includes(plot.id)}
+                        onChange={(event) => handleSelectOne(plot.id, event.currentTarget.checked)}
+                        aria-label={`选择 ${plot.plot_number}`}
+                      />
+                    </Table.Td>
                     <Table.Td>{plot.plot_number}</Table.Td>
                     <Table.Td>{plot.claimer}</Table.Td>
                     <Table.Td>{plot.crop}</Table.Td>
@@ -471,6 +555,52 @@ export function PlotListPage() {
               onClick={handleConfirmDelete}
               loading={deleteSubmitting}
               disabled={deleteSubmitting}
+            >
+              确认删除
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={batchDeleteModalOpen}
+        onClose={handleCancelBatchDelete}
+        title="确认批量删除"
+        size="sm"
+        centered
+        withCloseButton={!batchDeleteSubmitting}
+        closeOnClickOutside={!batchDeleteSubmitting}
+        closeOnEscape={!batchDeleteSubmitting}
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            您即将删除 <Text span fw={600}>{selectedIds.length}</Text> 条地块记录，此操作不可撤销，请确认：
+          </Text>
+          <Paper withBorder p="md" radius="md" bg="gray.0">
+            <Text size="sm" c="dimmed" mb="xs">
+              选中的地块编号：
+            </Text>
+            <Text size="sm" fw={500} style={{ wordBreak: 'break-all' }}>
+              {plots
+                .filter((p) => selectedIds.includes(p.id))
+                .map((p) => p.plot_number)
+                .join('、')}
+            </Text>
+          </Paper>
+          {batchDeleteError && (
+            <Text c="red" size="sm">
+              {batchDeleteError}
+            </Text>
+          )}
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={handleCancelBatchDelete} disabled={batchDeleteSubmitting}>
+              取消
+            </Button>
+            <Button
+              color="red"
+              onClick={handleConfirmBatchDelete}
+              loading={batchDeleteSubmitting}
+              disabled={batchDeleteSubmitting}
             >
               确认删除
             </Button>
