@@ -1,5 +1,18 @@
 import axios from 'axios';
-import type { Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, PlotStatus, SeverityLevel, Statistics, TreatmentStatus, UpdatePlotPayload } from '../types';
+import type {
+  Announcement,
+  Crop,
+  FertilizationRecord,
+  HarvestRecord,
+  PestReport,
+  PlantingLog,
+  Plot,
+  PlotStatus,
+  SeverityLevel,
+  Statistics,
+  TreatmentStatus,
+  UpdatePlotPayload,
+} from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -133,4 +146,23 @@ export async function createPestReport(payload: {
 export async function updatePestReportStatus(id: number, treatment_status: TreatmentStatus): Promise<PestReport> {
   const { data } = await api.patch<PestReport>(`/pest-reports/${id}/status`, { treatment_status });
   return data;
+}
+
+export async function fetchAnnouncements(): Promise<Announcement[]> {
+  const { data } = await api.get<Announcement[]>('/announcements');
+  return data;
+}
+
+export async function createAnnouncement(payload: {
+  title: string;
+  content: string;
+  publish_date: string;
+  is_pinned?: boolean;
+}): Promise<Announcement> {
+  const { data } = await api.post<Announcement>('/announcements', payload);
+  return data;
+}
+
+export async function deleteAnnouncement(id: number): Promise<void> {
+  await api.delete(`/announcements/${id}`);
 }

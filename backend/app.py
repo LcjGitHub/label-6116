@@ -4,9 +4,10 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import PLOT_STATUSES, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
+from models import PLOT_STATUSES, Announcement, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 from seed import seed_database
 from validators import (
+    validate_announcement_payload,
     validate_batch_delete_payload,
     validate_crop_payload,
     validate_fertilization_payload,
@@ -378,6 +379,41 @@ def create_crop():
     db.session.add(crop)
     db.session.commit()
     return jsonify(crop.to_dict()), 201
+
+
+@app.route("/api/announcements", methods=["GET"])
+def list_announcements():
+    announcements = Announcement.query.order_by(
+        Announcement.is_pinned.desc(),
+        Announcement.publish_date.desc(),
+        Announcement.id.desc()
+    ).all()
+    return jsonify([announcement.to_dict() for announcement in announcements])
+
+
+@app.route("/api/announcements", methods=["POST"])
+def create_announcement():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_announcement_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    announcement = Announcement(**payload)
+    db.session.add(announcement)
+    db.session.commit()
+    return jsonify(announcement.to_dict()), 201
+
+
+@app.route("/api/announcements/<int:announcement_id>", methods=["DELETE"])
+def delete_announcement(announcement_id):
+    announcement = db.session.get(Announcement, announcement_id)
+    if not announcement:
+        return jsonify({"error": "公告不存在"}), 404
+
+    db.session.delete(announcement)
+    db.session.commit()
+    return jsonify({"message": "删除成功"})
 
 
 with app.app_context():

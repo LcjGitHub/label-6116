@@ -135,3 +135,17 @@ export interface PestReportFormValues {
   severity: SeverityLevel | null;
   symptom_description: string;
 }
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  publish_date: string;
+  is_pinned: boolean;
+}
+
+export interface AnnouncementFormValues {
+  title: string;
+  content: string;
+  is_pinned: boolean;
+}

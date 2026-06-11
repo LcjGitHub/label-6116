@@ -1,7 +1,8 @@
 import { AppShell, Button, Group, Title } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant, IconFlask, IconBug } from '@tabler/icons-react';
+import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant, IconFlask, IconBug, IconBell } from '@tabler/icons-react';
 import { NavLink, Route, Routes } from 'react-router-dom';
+import { AnnouncementListPage } from './pages/AnnouncementListPage';
 import { ClaimFormPage } from './pages/ClaimFormPage';
 import { CropListPage } from './pages/CropListPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -78,6 +79,15 @@ export function App() {
               >
                 作物字典
               </Button>
+              <Button
+                component={NavLink}
+                to="/announcements"
+                variant="subtle"
+                leftSection={<IconBell size={16} />}
+                size="sm"
+              >
+                公告管理
+              </Button>
               <Button component={NavLink} to="/register" variant="light" size="sm">
                 认领登记
               </Button>
@@ -95,6 +105,7 @@ export function App() {
             <Route path="/fertilization-records" element={<FertilizationRecordListPage />} />
             <Route path="/pest-reports" element={<PestReportListPage />} />
             <Route path="/crops" element={<CropListPage />} />
+            <Route path="/announcements" element={<AnnouncementListPage />} />
             <Route path="/register" element={<ClaimFormPage />} />
           </Routes>
         </AppShell.Main>

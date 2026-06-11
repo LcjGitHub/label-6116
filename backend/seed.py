@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
+from models import Announcement, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 
 SEED_DATA = [
     {
@@ -268,6 +268,27 @@ SEED_FERTILIZATION_RECORDS = [
     },
 ]
 
+SEED_ANNOUNCEMENTS = [
+    {
+        "title": "关于社区菜园夏季维护的重要通知",
+        "content": "各位邻居大家好，夏季高温天气即将到来，请大家注意以下事项：1. 早晚浇水，避免中午高温时段；2. 及时搭建遮阳网，防止作物灼伤；3. 注意病虫害防治，定期巡查。如有疑问请联系社区管理员。",
+        "publish_date": date(2026, 6, 1),
+        "is_pinned": True,
+    },
+    {
+        "title": "新增有机肥料领取通知",
+        "content": "社区新采购一批有机肥料，有需要的邻居可于本周六上午9点到社区服务中心领取，每户限领5公斤。数量有限，先到先得。",
+        "publish_date": date(2026, 6, 5),
+        "is_pinned": False,
+    },
+    {
+        "title": "菜园种植经验分享会",
+        "content": "为了提高大家的种植技术，社区将于下周日下午2点在多功能厅举办种植经验分享会，邀请资深种植达人分享番茄、黄瓜的种植技巧。欢迎大家踊跃参加。",
+        "publish_date": date(2026, 6, 8),
+        "is_pinned": False,
+    },
+]
+
 
 def seed_database():
     plots_seeded = False
@@ -320,4 +341,9 @@ def seed_database():
                 report_data = {k: v for k, v in item.items() if k != "plot_number"}
                 report_data["plot_id"] = plot.id
                 db.session.add(PestReport(**report_data))
+        db.session.commit()
+
+    if Announcement.query.count() == 0:
+        for item in SEED_ANNOUNCEMENTS:
+            db.session.add(Announcement(**item))
         db.session.commit()

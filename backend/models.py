@@ -161,3 +161,22 @@ class PestReport(db.Model):
             "symptom_description": self.symptom_description,
             "treatment_status": self.treatment_status,
         }
+
+
+class Announcement(db.Model):
+    __tablename__ = "announcements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    publish_date = db.Column(db.Date, nullable=False)
+    is_pinned = db.Column(db.Boolean, nullable=False, default=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "publish_date": self.publish_date.isoformat(),
+            "is_pinned": self.is_pinned,
+        }

@@ -337,3 +337,34 @@ def validate_treatment_status_payload(data):
     if treatment_status not in TREATMENT_STATUSES:
         raise ValueError(f"处理状态必须为以下值之一: {', '.join(TREATMENT_STATUSES)}")
     return {"treatment_status": treatment_status}
+
+
+def validate_announcement_payload(data):
+    required_fields = ["title", "content", "publish_date"]
+    missing = [field for field in required_fields if data.get(field) is None or str(data.get(field)).strip() == ""]
+    if missing:
+        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+
+    title = (data.get("title") or "").strip()
+    if not title:
+        raise ValueError("标题不能为空")
+    if len(title) > 128:
+        raise ValueError("标题长度不能超过128个字符")
+    payload["title"] = title
+
+    content = (data.get("content") or "").strip()
+    if not content:
+        raise ValueError("正文内容不能为空")
+    payload["content"] = content
+
+    payload["publish_date"] = parse_date(data.get("publish_date"), "发布日期")
+
+    is_pinned = data.get("is_pinned")
+    if is_pinned is None:
+        payload["is_pinned"] = False
+    else:
+        payload["is_pinned"] = bool(is_pinned)
+
+    return payload
