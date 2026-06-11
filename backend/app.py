@@ -4,15 +4,17 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import PLOT_STATUSES, Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, db
+from models import PLOT_STATUSES, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 from seed import seed_database
 from validators import (
     validate_batch_delete_payload,
     validate_crop_payload,
     validate_fertilization_payload,
     validate_harvest_payload,
+    validate_pest_report_payload,
     validate_planting_log_payload,
     validate_plot_payload,
+    validate_treatment_status_payload,
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -265,6 +267,57 @@ def create_fertilization_record():
     db.session.add(record)
     db.session.commit()
     return jsonify(record.to_dict()), 201
+
+
+@app.route("/api/pest-reports", methods=["GET"])
+def list_pest_reports():
+    query = PestReport.query.join(Plot)
+
+    plot_id = request.args.get("plot_id", "").strip()
+    if plot_id:
+        try:
+            plot_id_int = int(plot_id)
+            query = query.filter(PestReport.plot_id == plot_id_int)
+        except ValueError:
+            pass
+
+    severity = request.args.get("severity", "").strip()
+    if severity:
+        query = query.filter(PestReport.severity == severity)
+
+    reports = query.order_by(PestReport.discovery_date.desc(), PestReport.id.desc()).all()
+    return jsonify([report.to_dict() for report in reports])
+
+
+@app.route("/api/pest-reports", methods=["POST"])
+def create_pest_report():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_pest_report_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    report = PestReport(**payload)
+    db.session.add(report)
+    db.session.commit()
+    return jsonify(report.to_dict()), 201
+
+
+@app.route("/api/pest-reports/<int:report_id>/status", methods=["PATCH"])
+def update_pest_report_status(report_id):
+    report = db.session.get(PestReport, report_id)
+    if not report:
+        return jsonify({"error": "病虫害上报不存在"}), 404
+
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_treatment_status_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    report.treatment_status = payload["treatment_status"]
+    db.session.commit()
+    return jsonify(report.to_dict())
 
 
 @app.route("/api/statistics", methods=["GET"])

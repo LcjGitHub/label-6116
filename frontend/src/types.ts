@@ -104,3 +104,30 @@ export interface FertilizationRecordFormValues {
   amount_kg: number | null;
   operator: string;
 }
+
+export type PestType = '虫害' | '病害' | '杂草';
+export type SeverityLevel = '轻微' | '中等' | '严重';
+export type TreatmentStatus = '待处理' | '处理中' | '已处理';
+
+export const PEST_TYPES: PestType[] = ['虫害', '病害', '杂草'];
+export const SEVERITY_LEVELS: SeverityLevel[] = ['轻微', '中等', '严重'];
+export const TREATMENT_STATUSES: TreatmentStatus[] = ['待处理', '处理中', '已处理'];
+
+export interface PestReport {
+  id: number;
+  plot_id: number;
+  plot_number: string;
+  discovery_date: string;
+  pest_type: PestType;
+  severity: SeverityLevel;
+  symptom_description: string;
+  treatment_status: TreatmentStatus;
+}
+
+export interface PestReportFormValues {
+  plot_id: number | null;
+  discovery_date: Date | null;
+  pest_type: PestType | null;
+  severity: SeverityLevel | null;
+  symptom_description: string;
+}

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models import PLOT_STATUSES, Plot, db
+from models import PEST_TYPES, PLOT_STATUSES, SEVERITY_LEVELS, TREATMENT_STATUSES, Plot, db
 
 
 def parse_date(value, field_name):
@@ -285,3 +285,55 @@ def validate_fertilization_payload(data):
     payload["operator"] = operator
 
     return payload
+
+
+def validate_pest_report_payload(data):
+    required_fields = ["plot_id", "discovery_date", "pest_type", "severity", "symptom_description"]
+    missing = [field for field in required_fields if data.get(field) is None or str(data.get(field)).strip() == ""]
+    if missing:
+        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+
+    try:
+        payload["plot_id"] = int(data.get("plot_id"))
+    except (ValueError, TypeError):
+        raise ValueError("地块编号格式错误")
+
+    plot = db.session.get(Plot, payload["plot_id"])
+    if not plot:
+        raise ValueError("关联地块不存在")
+
+    payload["discovery_date"] = parse_date(data.get("discovery_date"), "发现日期")
+
+    pest_type = (data.get("pest_type") or "").strip()
+    if pest_type not in PEST_TYPES:
+        raise ValueError(f"病虫害类型必须为以下值之一: {', '.join(PEST_TYPES)}")
+    payload["pest_type"] = pest_type
+
+    severity = (data.get("severity") or "").strip()
+    if severity not in SEVERITY_LEVELS:
+        raise ValueError(f"严重程度必须为以下值之一: {', '.join(SEVERITY_LEVELS)}")
+    payload["severity"] = severity
+
+    symptom_description = (data.get("symptom_description") or "").strip()
+    if not symptom_description:
+        raise ValueError("症状描述不能为空")
+    payload["symptom_description"] = symptom_description
+
+    treatment_status = (data.get("treatment_status") or "").strip()
+    if treatment_status:
+        if treatment_status not in TREATMENT_STATUSES:
+            raise ValueError(f"处理状态必须为以下值之一: {', '.join(TREATMENT_STATUSES)}")
+        payload["treatment_status"] = treatment_status
+
+    return payload
+
+
+def validate_treatment_status_payload(data):
+    treatment_status = (data.get("treatment_status") or "").strip()
+    if not treatment_status:
+        raise ValueError("缺少必填字段: treatment_status")
+    if treatment_status not in TREATMENT_STATUSES:
+        raise ValueError(f"处理状态必须为以下值之一: {', '.join(TREATMENT_STATUSES)}")
+    return {"treatment_status": treatment_status}

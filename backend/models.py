@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 PLOT_STATUSES = ["种植中", "已收获", "空闲"]
+PEST_TYPES = ["虫害", "病害", "杂草"]
+SEVERITY_LEVELS = ["轻微", "中等", "严重"]
+TREATMENT_STATUSES = ["待处理", "处理中", "已处理"]
 
 
 class Plot(db.Model):
@@ -21,6 +24,7 @@ class Plot(db.Model):
     harvest_records = db.relationship("HarvestRecord", back_populates="plot", cascade="all, delete-orphan")
     planting_logs = db.relationship("PlantingLog", back_populates="plot", cascade="all, delete-orphan")
     fertilization_records = db.relationship("FertilizationRecord", back_populates="plot", cascade="all, delete-orphan")
+    pest_reports = db.relationship("PestReport", back_populates="plot", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -118,4 +122,30 @@ class FertilizationRecord(db.Model):
             "fertilizer_name": self.fertilizer_name,
             "amount_kg": self.amount_kg,
             "operator": self.operator,
+        }
+
+
+class PestReport(db.Model):
+    __tablename__ = "pest_reports"
+
+    id = db.Column(db.Integer, primary_key=True)
+    plot_id = db.Column(db.Integer, db.ForeignKey("plots.id"), nullable=False)
+    discovery_date = db.Column(db.Date, nullable=False)
+    pest_type = db.Column(db.String(16), nullable=False)
+    severity = db.Column(db.String(16), nullable=False)
+    symptom_description = db.Column(db.Text, nullable=False)
+    treatment_status = db.Column(db.String(16), nullable=False, default="待处理")
+
+    plot = db.relationship("Plot", back_populates="pest_reports")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "plot_id": self.plot_id,
+            "plot_number": self.plot.plot_number if self.plot else None,
+            "discovery_date": self.discovery_date.isoformat(),
+            "pest_type": self.pest_type,
+            "severity": self.severity,
+            "symptom_description": self.symptom_description,
+            "treatment_status": self.treatment_status,
         }

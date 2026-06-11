@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, db
+from models import Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 
 SEED_DATA = [
     {
@@ -160,6 +160,41 @@ SEED_PLANTING_LOGS = [
     },
 ]
 
+SEED_PEST_REPORTS = [
+    {
+        "plot_number": "A-01",
+        "discovery_date": date(2026, 4, 15),
+        "pest_type": "虫害",
+        "severity": "轻微",
+        "symptom_description": "发现少量蚜虫在番茄叶片背面，尚未造成明显危害。",
+        "treatment_status": "已处理",
+    },
+    {
+        "plot_number": "B-01",
+        "discovery_date": date(2026, 5, 20),
+        "pest_type": "病害",
+        "severity": "中等",
+        "symptom_description": "辣椒叶片出现黄褐色斑点，部分叶片开始萎蔫，疑似炭疽病。",
+        "treatment_status": "处理中",
+    },
+    {
+        "plot_number": "B-02",
+        "discovery_date": date(2026, 5, 28),
+        "pest_type": "杂草",
+        "severity": "严重",
+        "symptom_description": "茄子地块杂草丛生，主要有狗尾草和牛筋草，与作物争夺养分严重。",
+        "treatment_status": "待处理",
+    },
+    {
+        "plot_number": "A-02",
+        "discovery_date": date(2026, 4, 25),
+        "pest_type": "虫害",
+        "severity": "中等",
+        "symptom_description": "黄瓜叶片发现潜叶蝇痕迹，叶片出现不规则白色弯曲隧道。",
+        "treatment_status": "已处理",
+    },
+]
+
 SEED_FERTILIZATION_RECORDS = [
     {
         "plot_number": "A-01",
@@ -275,4 +310,14 @@ def seed_database():
                 record_data = {k: v for k, v in item.items() if k != "plot_number"}
                 record_data["plot_id"] = plot.id
                 db.session.add(FertilizationRecord(**record_data))
+        db.session.commit()
+
+    if PestReport.query.count() == 0:
+        for item in SEED_PEST_REPORTS:
+            plot_number = item["plot_number"]
+            plot = Plot.query.filter_by(plot_number=plot_number).first()
+            if plot:
+                report_data = {k: v for k, v in item.items() if k != "plot_number"}
+                report_data["plot_id"] = plot.id
+                db.session.add(PestReport(**report_data))
         db.session.commit()

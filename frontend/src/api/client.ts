@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, PlotStatus, Statistics, UpdatePlotPayload } from '../types';
+import type { Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, PlotStatus, SeverityLevel, Statistics, TreatmentStatus, UpdatePlotPayload } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -106,5 +106,26 @@ export async function createFertilizationRecord(payload: {
   operator: string;
 }): Promise<FertilizationRecord> {
   const { data } = await api.post<FertilizationRecord>('/fertilization-records', payload);
+  return data;
+}
+
+export async function fetchPestReports(params?: { plot_id?: number; severity?: SeverityLevel }): Promise<PestReport[]> {
+  const { data } = await api.get<PestReport[]>('/pest-reports', { params });
+  return data;
+}
+
+export async function createPestReport(payload: {
+  plot_id: number;
+  discovery_date: string;
+  pest_type: string;
+  severity: string;
+  symptom_description: string;
+}): Promise<PestReport> {
+  const { data } = await api.post<PestReport>('/pest-reports', payload);
+  return data;
+}
+
+export async function updatePestReportStatus(id: number, treatment_status: TreatmentStatus): Promise<PestReport> {
+  const { data } = await api.patch<PestReport>(`/pest-reports/${id}/status`, { treatment_status });
   return data;
 }
