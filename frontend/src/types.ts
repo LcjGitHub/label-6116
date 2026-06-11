@@ -14,3 +14,19 @@ export interface PlotFormValues {
   claim_date: Date | null;
   expected_harvest_date: Date | null;
 }
+
+export interface HarvestRecord {
+  id: number;
+  plot_id: number;
+  plot_number: string;
+  actual_harvest_date: string;
+  harvest_weight: number;
+  remark: string | null;
+}
+
+export interface HarvestRecordFormValues {
+  plot_id: number | null;
+  actual_harvest_date: Date | null;
+  harvest_weight: number | null;
+  remark: string;
+}

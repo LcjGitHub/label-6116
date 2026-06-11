@@ -15,6 +15,8 @@ class Plot(db.Model):
     claim_date = db.Column(db.Date, nullable=False)
     expected_harvest_date = db.Column(db.Date, nullable=False)
 
+    harvest_records = db.relationship("HarvestRecord", back_populates="plot", cascade="all, delete-orphan")
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -23,4 +25,26 @@ class Plot(db.Model):
             "crop": self.crop,
             "claim_date": self.claim_date.isoformat(),
             "expected_harvest_date": self.expected_harvest_date.isoformat(),
+        }
+
+
+class HarvestRecord(db.Model):
+    __tablename__ = "harvest_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    plot_id = db.Column(db.Integer, db.ForeignKey("plots.id"), nullable=False)
+    actual_harvest_date = db.Column(db.Date, nullable=False)
+    harvest_weight = db.Column(db.Float, nullable=False)
+    remark = db.Column(db.Text, nullable=True)
+
+    plot = db.relationship("Plot", back_populates="harvest_records")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "plot_id": self.plot_id,
+            "plot_number": self.plot.plot_number if self.plot else None,
+            "actual_harvest_date": self.actual_harvest_date.isoformat(),
+            "harvest_weight": self.harvest_weight,
+            "remark": self.remark,
         }

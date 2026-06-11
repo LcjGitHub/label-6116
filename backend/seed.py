@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Plot, db
+from models import HarvestRecord, Plot, db
 
 SEED_DATA = [
     {
@@ -40,11 +40,41 @@ SEED_DATA = [
     },
 ]
 
+SEED_HARVEST_RECORDS = [
+    {
+        "plot_number": "A-01",
+        "actual_harvest_date": date(2026, 6, 10),
+        "harvest_weight": 12.5,
+        "remark": "第一批番茄成熟，品质优良",
+    },
+    {
+        "plot_number": "A-02",
+        "actual_harvest_date": date(2026, 5, 18),
+        "harvest_weight": 8.3,
+        "remark": "黄瓜提前成熟",
+    },
+    {
+        "plot_number": "C-01",
+        "actual_harvest_date": date(2026, 5, 8),
+        "harvest_weight": 5.0,
+        "remark": None,
+    },
+]
+
 
 def seed_database():
-    if Plot.query.count() > 0:
-        return
+    plots_seeded = False
+    if Plot.query.count() == 0:
+        for item in SEED_DATA:
+            db.session.add(Plot(**item))
+        db.session.commit()
+        plots_seeded = True
 
-    for item in SEED_DATA:
-        db.session.add(Plot(**item))
-    db.session.commit()
+    if HarvestRecord.query.count() == 0:
+        for item in SEED_HARVEST_RECORDS:
+            plot_number = item.pop("plot_number")
+            plot = Plot.query.filter_by(plot_number=plot_number).first()
+            if plot:
+                item["plot_id"] = plot.id
+                db.session.add(HarvestRecord(**item))
+        db.session.commit()
