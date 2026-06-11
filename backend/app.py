@@ -401,6 +401,21 @@ def create_crop():
     return jsonify(crop.to_dict()), 201
 
 
+@app.route("/api/crops/<int:crop_id>", methods=["DELETE"])
+def delete_crop(crop_id):
+    crop = db.session.get(Crop, crop_id)
+    if not crop:
+        return jsonify({"error": "作物不存在"}), 404
+
+    used_plot = Plot.query.filter_by(crop=crop.name).first()
+    if used_plot:
+        return jsonify({"error": f"作物「{crop.name}」正在被地块「{used_plot.plot_number}」使用，无法删除"}), 400
+
+    db.session.delete(crop)
+    db.session.commit()
+    return jsonify({"message": "删除成功"})
+
+
 @app.route("/api/claimants", methods=["GET"])
 def list_claimants():
     query = Claimant.query

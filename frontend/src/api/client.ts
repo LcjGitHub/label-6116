@@ -103,6 +103,10 @@ export async function createCrop(payload: {
   return data;
 }
 
+export async function deleteCrop(id: number): Promise<void> {
+  await api.delete(`/crops/${id}`);
+}
+
 export async function fetchPlantingLogs(params?: { plot_id?: number }): Promise<PlantingLog[]> {
   const { data } = await api.get<PlantingLog[]>('/planting-logs', { params });
   return data;
