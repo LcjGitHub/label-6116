@@ -13,14 +13,29 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconArrowLeft } from '@tabler/icons-react';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPlot } from '../api/client';
-import type { PlotFormValues } from '../types';
+import { createPlot, fetchCrops } from '../api/client';
+import type { Crop, PlotFormValues } from '../types';
 
 export function ClaimFormPage() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [cropOptions, setCropOptions] = useState<{ value: string; label: string }[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetchCrops()
+      .then((crops: Crop[]) => {
+        if (active) {
+          setCropOptions(crops.map((c) => ({ value: c.name, label: c.name })));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const form = useForm<PlotFormValues>({
     initialValues: {
@@ -122,10 +137,16 @@ export function ClaimFormPage() {
               />
               <TextInput
                 label="作物"
-                placeholder="例如 番茄"
+                placeholder="选择或输入作物名称"
+                list="crop-options-list"
                 withAsterisk
                 {...form.getInputProps('crop')}
               />
+              <datalist id="crop-options-list">
+                {cropOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value} />
+                ))}
+              </datalist>
               <DateInput
                 label="认领日期"
                 placeholder="选择认领日期"

@@ -42,3 +42,18 @@ export interface Statistics {
   upcoming_harvests: number;
   crop_distribution: CropDistribution[];
 }
+
+export interface Crop {
+  id: number;
+  code: string;
+  name: string;
+  category: string;
+  suitable_season: string;
+}
+
+export interface CropFormValues {
+  code: string;
+  name: string;
+  category: string;
+  suitable_season: string;
+}

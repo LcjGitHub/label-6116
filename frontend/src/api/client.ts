@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HarvestRecord, Plot, Statistics } from '../types';
+import type { Crop, HarvestRecord, Plot, Statistics } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -49,5 +49,20 @@ export async function deleteHarvestRecord(id: number): Promise<void> {
 
 export async function fetchStatistics(): Promise<Statistics> {
   const { data } = await api.get<Statistics>('/statistics');
+  return data;
+}
+
+export async function fetchCrops(params?: { category?: string }): Promise<Crop[]> {
+  const { data } = await api.get<Crop[]>('/crops', { params });
+  return data;
+}
+
+export async function createCrop(payload: {
+  code: string;
+  name: string;
+  category: string;
+  suitable_season: string;
+}): Promise<Crop> {
+  const { data } = await api.post<Crop>('/crops', payload);
   return data;
 }

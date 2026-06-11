@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import HarvestRecord, Plot, db
+from models import Crop, HarvestRecord, Plot, db
 from seed import seed_database
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -248,6 +248,66 @@ def get_statistics():
         "upcoming_harvests": upcoming_harvests,
         "crop_distribution": crop_distribution,
     })
+
+
+def validate_crop_payload(data, partial=False):
+    required_fields = ["code", "name", "category", "suitable_season"]
+    if not partial:
+        missing = [field for field in required_fields if not data.get(field)]
+        if missing:
+            raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+    if "code" in data or not partial:
+        payload["code"] = (data.get("code") or "").strip()
+        if not payload["code"]:
+            raise ValueError("编号不能为空")
+
+    if "name" in data or not partial:
+        payload["name"] = (data.get("name") or "").strip()
+        if not payload["name"]:
+            raise ValueError("名称不能为空")
+
+    if "category" in data or not partial:
+        payload["category"] = (data.get("category") or "").strip()
+        if not payload["category"]:
+            raise ValueError("分类不能为空")
+
+    if "suitable_season" in data or not partial:
+        payload["suitable_season"] = (data.get("suitable_season") or "").strip()
+        if not payload["suitable_season"]:
+            raise ValueError("适宜季节不能为空")
+
+    return payload
+
+
+@app.route("/api/crops", methods=["GET"])
+def list_crops():
+    category = request.args.get("category", "").strip()
+    query = Crop.query
+    if category:
+        query = query.filter(Crop.category == category)
+    crops = query.order_by(Crop.code).all()
+    return jsonify([crop.to_dict() for crop in crops])
+
+
+@app.route("/api/crops", methods=["POST"])
+def create_crop():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_crop_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if Crop.query.filter_by(code=payload["code"]).first():
+        return jsonify({"error": "编号已存在"}), 409
+    if Crop.query.filter_by(name=payload["name"]).first():
+        return jsonify({"error": "名称已存在"}), 409
+
+    crop = Crop(**payload)
+    db.session.add(crop)
+    db.session.commit()
+    return jsonify(crop.to_dict()), 201
 
 
 with app.app_context():

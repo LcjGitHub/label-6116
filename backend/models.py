@@ -48,3 +48,22 @@ class HarvestRecord(db.Model):
             "harvest_weight": self.harvest_weight,
             "remark": self.remark,
         }
+
+
+class Crop(db.Model):
+    __tablename__ = "crops"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(32), unique=True, nullable=False)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    category = db.Column(db.String(32), nullable=False)
+    suitable_season = db.Column(db.String(64), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "code": self.code,
+            "name": self.name,
+            "category": self.category,
+            "suitable_season": self.suitable_season,
+        }
