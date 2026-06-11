@@ -55,6 +55,7 @@ export function PlotListPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingPlot, setDeletingPlot] = useState<Plot | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
 
@@ -111,25 +112,29 @@ export function PlotListPage() {
 
   const handleDelete = (plot: Plot) => {
     setDeletingPlot(plot);
+    setDeleteError(null);
     setDeleteModalOpen(true);
   };
 
   const handleCancelDelete = () => {
     setDeleteModalOpen(false);
     setDeletingPlot(null);
+    setDeleteError(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingPlot) return;
+    setDeleteError(null);
     setDeleteSubmitting(true);
     try {
       await deletePlot(deletingPlot.id);
       notifications.show({ title: '删除成功', message: '地块信息已删除', color: 'green' });
       setDeleteModalOpen(false);
       setDeletingPlot(null);
+      setDeleteError(null);
       await loadPlots();
     } catch {
-      notifications.show({ title: '删除失败', message: '删除失败，请稍后重试', color: 'red' });
+      setDeleteError('删除失败，请稍后重试');
     } finally {
       setDeleteSubmitting(false);
     }
@@ -432,6 +437,9 @@ export function PlotListPage() {
         title="确认删除"
         size="sm"
         centered
+        withCloseButton={!deleteSubmitting}
+        closeOnClickOutside={!deleteSubmitting}
+        closeOnEscape={!deleteSubmitting}
       >
         <Stack gap="md">
           <Text size="sm">
@@ -449,6 +457,11 @@ export function PlotListPage() {
               </Group>
             </Stack>
           </Paper>
+          {deleteError && (
+            <Text c="red" size="sm">
+              {deleteError}
+            </Text>
+          )}
           <Group justify="flex-end" mt="md">
             <Button variant="subtle" onClick={handleCancelDelete} disabled={deleteSubmitting}>
               取消
