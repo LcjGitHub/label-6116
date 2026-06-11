@@ -1,12 +1,15 @@
 import {
   Button,
+  Combobox,
   Container,
   Group,
+  InputBase,
   Paper,
   Stack,
   Text,
   TextInput,
   Title,
+  useCombobox,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
@@ -21,21 +24,43 @@ import type { Crop, PlotFormValues } from '../types';
 export function ClaimFormPage() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [cropOptions, setCropOptions] = useState<{ value: string; label: string }[]>([]);
+  const [cropOptions, setCropOptions] = useState<string[]>([]);
+  const [cropLoadError, setCropLoadError] = useState<string | null>(null);
+  const [cropSearch, setCropSearch] = useState('');
+  const combobox = useCombobox();
 
   useEffect(() => {
     let active = true;
     fetchCrops()
       .then((crops: Crop[]) => {
         if (active) {
-          setCropOptions(crops.map((c) => ({ value: c.name, label: c.name })));
+          setCropOptions(crops.map((c) => c.name));
+          setCropLoadError(null);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) {
+          setCropLoadError('加载作物列表失败，请确认后端服务已启动');
+        }
+      });
     return () => {
       active = false;
     };
   }, []);
+
+  const filteredCrops = cropOptions.filter((name) =>
+    name.toLowerCase().includes(cropSearch.toLowerCase()),
+  );
+
+  const exactMatch = cropOptions.some(
+    (name) => name.toLowerCase() === cropSearch.toLowerCase(),
+  );
+
+  const cropOptionsRender = filteredCrops.map((name) => (
+    <Combobox.Option key={name} value={name}>
+      {name}
+    </Combobox.Option>
+  ));
 
   const form = useForm<PlotFormValues>({
     initialValues: {
@@ -120,6 +145,12 @@ export function ClaimFormPage() {
           填写地块认领信息并提交保存
         </Text>
 
+        {cropLoadError && (
+          <Text c="red" size="sm">
+            {cropLoadError}
+          </Text>
+        )}
+
         <Paper withBorder p="lg" radius="md">
           <form onSubmit={form.onSubmit(handleSubmit)}>
             <Stack gap="md">
@@ -135,18 +166,52 @@ export function ClaimFormPage() {
                 withAsterisk
                 {...form.getInputProps('claimer')}
               />
-              <TextInput
-                label="作物"
-                placeholder="选择或输入作物名称"
-                list="crop-options-list"
-                withAsterisk
-                {...form.getInputProps('crop')}
-              />
-              <datalist id="crop-options-list">
-                {cropOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value} />
-                ))}
-              </datalist>
+              <Combobox
+                store={combobox}
+                onOptionSubmit={(value) => {
+                  form.setFieldValue('crop', value);
+                  setCropSearch(value);
+                  combobox.closeDropdown();
+                }}
+              >
+                <Combobox.Target>
+                  <InputBase
+                    label="作物"
+                    placeholder="选择或输入作物名称"
+                    withAsterisk
+                    rightSection={<Combobox.Chevron />}
+                    value={cropSearch}
+                    onChange={(event) => {
+                      setCropSearch(event.currentTarget.value);
+                      form.setFieldValue('crop', event.currentTarget.value);
+                      combobox.openDropdown();
+                      combobox.updateSelectedOptionIndex();
+                    }}
+                    onFocus={() => {
+                      combobox.openDropdown();
+                    }}
+                    onBlur={() => {
+                      combobox.closeDropdown();
+                    }}
+                    error={form.errors.crop}
+                  />
+                </Combobox.Target>
+
+                <Combobox.Dropdown>
+                  <Combobox.Options>
+                    {cropOptionsRender}
+                    {!exactMatch && cropSearch.trim() && (
+                      <Combobox.Option value={cropSearch}>
+                        新增自定义作物 "{cropSearch}"
+                      </Combobox.Option>
+                    )}
+                    {filteredCrops.length === 0 && !cropSearch.trim() && (
+                      <Combobox.Empty>暂无作物数据</Combobox.Empty>
+                    )}
+                  </Combobox.Options>
+                </Combobox.Dropdown>
+              </Combobox>
+
               <DateInput
                 label="认领日期"
                 placeholder="选择认领日期"

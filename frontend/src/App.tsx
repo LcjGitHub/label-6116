@@ -12,7 +12,7 @@ export function App() {
   return (
     <>
       <Notifications position="top-right" />
-      <AppShell header={{ height: 'auto' }} padding="md">
+      <AppShell header={{ height: 60 }} padding="md">
         <AppShell.Header px="md" py="sm">
           <Group justify="space-between" align="center" wrap="wrap" gap="md">
             <Group gap="xs">
