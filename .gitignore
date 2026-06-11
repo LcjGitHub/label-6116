@@ -115,6 +115,9 @@ tmp/
 .vercel/
 .netlify/
 
+# TypeScript build info
+tsconfig.tsbuildinfo
+
 # Archives (optional local bundles)
 *.zip
 *.tar

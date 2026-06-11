@@ -92,18 +92,9 @@ export function HarvestRecordListPage() {
     setDeletingId(id);
     try {
       await deleteHarvestRecord(id);
-      notifications.show({
-        title: '删除成功',
-        message: '收获记录已删除',
-        color: 'green',
-      });
       await loadRecords();
     } catch {
-      notifications.show({
-        title: '删除失败',
-        message: '删除失败，请稍后重试',
-        color: 'red',
-      });
+      setError('删除失败，请稍后重试');
     } finally {
       setDeletingId(null);
     }
@@ -123,7 +114,13 @@ export function HarvestRecordListPage() {
         message: '收获记录已保存',
         color: 'green',
       });
-      form.reset();
+      form.setValues({
+        plot_id: null,
+        actual_harvest_date: null,
+        harvest_weight: null,
+        remark: '',
+      });
+      form.clearErrors();
       await loadRecords();
     } catch (err: unknown) {
       const message =
@@ -213,7 +210,7 @@ export function HarvestRecordListPage() {
                 <NumberInput
                   label="收获重量(公斤)"
                   placeholder="请输入收获重量"
-                  min={0}
+                  min={0.1}
                   step={0.1}
                   withAsterisk
                   {...form.getInputProps('harvest_weight')}

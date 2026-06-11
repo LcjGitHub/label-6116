@@ -72,9 +72,10 @@ def seed_database():
 
     if HarvestRecord.query.count() == 0:
         for item in SEED_HARVEST_RECORDS:
-            plot_number = item.pop("plot_number")
+            plot_number = item["plot_number"]
             plot = Plot.query.filter_by(plot_number=plot_number).first()
             if plot:
-                item["plot_id"] = plot.id
-                db.session.add(HarvestRecord(**item))
+                record_data = {k: v for k, v in item.items() if k != "plot_number"}
+                record_data["plot_id"] = plot.id
+                db.session.add(HarvestRecord(**record_data))
         db.session.commit()
