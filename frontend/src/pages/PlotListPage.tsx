@@ -115,6 +115,10 @@ export function PlotListPage() {
     loadPlots();
   }, [loadPlots]);
 
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [debouncedClaimer, debouncedCrop, status]);
+
   const handleDelete = (plot: Plot) => {
     setDeletingPlot(plot);
     setDeleteError(null);
@@ -178,8 +182,7 @@ export function PlotListPage() {
     setBatchDeleteError(null);
     setBatchDeleteSubmitting(true);
     try {
-      const result = await batchDeletePlots(selectedIds);
-      notifications.show({ title: '删除成功', message: result.message, color: 'green' });
+      await batchDeletePlots(selectedIds);
       setBatchDeleteModalOpen(false);
       setSelectedIds([]);
       setBatchDeleteError(null);
@@ -272,19 +275,7 @@ export function PlotListPage() {
     <Container size="lg" py="xl">
       <Stack gap="lg">
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
-          <Group gap="md" align="center">
-            <Title order={2}>地块列表</Title>
-            {selectedIds.length > 0 && (
-              <Button
-                color="red"
-                variant="light"
-                leftSection={<IconTrash size={16} />}
-                onClick={handleOpenBatchDelete}
-              >
-                批量删除 ({selectedIds.length})
-              </Button>
-            )}
-          </Group>
+          <Title order={2}>地块列表</Title>
           <Button component={Link} to="/register" leftSection={<IconPlus size={16} />}>
             认领登记
           </Button>
@@ -319,6 +310,20 @@ export function PlotListPage() {
             </Button>
           </Group>
         </Paper>
+
+        {selectedIds.length > 0 && (
+          <Group gap="sm" align="center">
+            <Button
+              color="red"
+              variant="light"
+              size="sm"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleOpenBatchDelete}
+            >
+              批量删除 ({selectedIds.length})
+            </Button>
+          </Group>
+        )}
 
         {error && (
           <Text c="red" size="sm">
