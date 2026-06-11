@@ -286,17 +286,17 @@ export function PlotListPage() {
         <Paper withBorder p="md" radius="md">
           <Group align="flex-end">
             <TextInput
-              label="地块编号"
-              placeholder="筛选地块编号"
-              value={plotNumber}
-              onChange={(event) => setPlotNumber(event.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <TextInput
               label="认领人"
               placeholder="筛选认领人"
               value={claimer}
               onChange={(event) => setClaimer(event.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <TextInput
+              label="地块编号"
+              placeholder="筛选地块编号"
+              value={plotNumber}
+              onChange={(event) => setPlotNumber(event.currentTarget.value)}
               style={{ flex: 1 }}
             />
             <TextInput
