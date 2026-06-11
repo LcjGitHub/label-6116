@@ -63,3 +63,18 @@ export interface CropFormValues {
   category: string;
   suitable_season: string;
 }
+
+export interface PlantingLog {
+  id: number;
+  plot_id: number;
+  plot_number: string;
+  log_date: string;
+  content: string;
+  recorder: string;
+}
+
+export interface PlantingLogFormValues {
+  log_date: Date | null;
+  content: string;
+  recorder: string;
+}

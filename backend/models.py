@@ -19,6 +19,7 @@ class Plot(db.Model):
     status = db.Column(db.String(16), nullable=False, default="种植中")
 
     harvest_records = db.relationship("HarvestRecord", back_populates="plot", cascade="all, delete-orphan")
+    planting_logs = db.relationship("PlantingLog", back_populates="plot", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -70,4 +71,26 @@ class Crop(db.Model):
             "name": self.name,
             "category": self.category,
             "suitable_season": self.suitable_season,
+        }
+
+
+class PlantingLog(db.Model):
+    __tablename__ = "planting_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    plot_id = db.Column(db.Integer, db.ForeignKey("plots.id"), nullable=False)
+    log_date = db.Column(db.Date, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    recorder = db.Column(db.String(64), nullable=False)
+
+    plot = db.relationship("Plot", back_populates="planting_logs")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "plot_id": self.plot_id,
+            "plot_number": self.plot.plot_number if self.plot else None,
+            "log_date": self.log_date.isoformat(),
+            "content": self.content,
+            "recorder": self.recorder,
         }

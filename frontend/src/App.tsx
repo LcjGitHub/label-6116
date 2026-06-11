@@ -7,6 +7,7 @@ import { CropListPage } from './pages/CropListPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { HarvestRecordListPage } from './pages/HarvestRecordListPage';
 import { PlotListPage } from './pages/PlotListPage';
+import { PlotLogPage } from './pages/PlotLogPage';
 
 export function App() {
   return (
@@ -67,6 +68,7 @@ export function App() {
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/" element={<PlotListPage />} />
+            <Route path="/plots/:plot_id/logs" element={<PlotLogPage />} />
             <Route path="/harvest-records" element={<HarvestRecordListPage />} />
             <Route path="/crops" element={<CropListPage />} />
             <Route path="/register" element={<ClaimFormPage />} />

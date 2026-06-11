@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import PLOT_STATUSES, Crop, HarvestRecord, Plot, db
+from models import PLOT_STATUSES, Crop, HarvestRecord, PlantingLog, Plot, db
 from seed import seed_database
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -227,6 +227,68 @@ def delete_harvest_record(record_id):
     db.session.delete(record)
     db.session.commit()
     return jsonify({"message": "删除成功"})
+
+
+def validate_planting_log_payload(data):
+    required_fields = ["plot_id", "log_date", "content", "recorder"]
+    missing = [field for field in required_fields if data.get(field) is None or str(data.get(field)).strip() == ""]
+    if missing:
+        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+
+    try:
+        payload["plot_id"] = int(data.get("plot_id"))
+    except (ValueError, TypeError):
+        raise ValueError("地块编号格式错误")
+
+    plot = db.session.get(Plot, payload["plot_id"])
+    if not plot:
+        raise ValueError("关联地块不存在")
+
+    payload["log_date"] = parse_date(data.get("log_date"), "记录日期")
+
+    content = (data.get("content") or "").strip()
+    if not content:
+        raise ValueError("日志内容不能为空")
+    payload["content"] = content
+
+    recorder = (data.get("recorder") or "").strip()
+    if not recorder:
+        raise ValueError("记录人不能为空")
+    payload["recorder"] = recorder
+
+    return payload
+
+
+@app.route("/api/planting-logs", methods=["GET"])
+def list_planting_logs():
+    query = PlantingLog.query.join(Plot)
+
+    plot_id = request.args.get("plot_id", "").strip()
+    if plot_id:
+        try:
+            plot_id_int = int(plot_id)
+            query = query.filter(PlantingLog.plot_id == plot_id_int)
+        except ValueError:
+            pass
+
+    logs = query.order_by(PlantingLog.log_date.desc(), PlantingLog.id.desc()).all()
+    return jsonify([log.to_dict() for log in logs])
+
+
+@app.route("/api/planting-logs", methods=["POST"])
+def create_planting_log():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_planting_log_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    log = PlantingLog(**payload)
+    db.session.add(log)
+    db.session.commit()
+    return jsonify(log.to_dict()), 201
 
 
 @app.route("/api/statistics", methods=["GET"])

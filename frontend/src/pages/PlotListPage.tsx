@@ -14,7 +14,7 @@ import {
   Title,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconFileText, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deletePlot, fetchPlots } from '../api/client';
@@ -151,7 +151,7 @@ export function PlotListPage() {
                   <Table.Th w={100}>状态</Table.Th>
                   <Table.Th>认领日期</Table.Th>
                   <Table.Th>预计收获日</Table.Th>
-                  <Table.Th w={80}>操作</Table.Th>
+                  <Table.Th w={140}>操作</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -172,15 +172,27 @@ export function PlotListPage() {
                     <Table.Td>{formatDate(plot.claim_date)}</Table.Td>
                     <Table.Td>{formatDate(plot.expected_harvest_date)}</Table.Td>
                     <Table.Td>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        aria-label="删除"
-                        loading={deletingId === plot.id}
-                        onClick={() => handleDelete(plot.id)}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
+                      <Group gap="xs">
+                        <ActionIcon
+                          component={Link}
+                          to={`/plots/${plot.id}/logs`}
+                          variant="subtle"
+                          color="blue"
+                          aria-label="日志"
+                          title="种植日志"
+                        >
+                          <IconFileText size={16} />
+                        </ActionIcon>
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          aria-label="删除"
+                          loading={deletingId === plot.id}
+                          onClick={() => handleDelete(plot.id)}
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      </Group>
                     </Table.Td>
                   </Table.Tr>
                 ))}
