@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HarvestRecord, Plot } from '../types';
+import type { HarvestRecord, Plot, Statistics } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -45,4 +45,9 @@ export async function createHarvestRecord(payload: {
 
 export async function deleteHarvestRecord(id: number): Promise<void> {
   await api.delete(`/harvest-records/${id}`);
+}
+
+export async function fetchStatistics(): Promise<Statistics> {
+  const { data } = await api.get<Statistics>('/statistics');
+  return data;
 }

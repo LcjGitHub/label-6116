@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, date
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -217,6 +217,37 @@ def delete_harvest_record(record_id):
     db.session.delete(record)
     db.session.commit()
     return jsonify({"message": "删除成功"})
+
+
+@app.route("/api/statistics", methods=["GET"])
+def get_statistics():
+    total_plots = Plot.query.count()
+
+    crop_types = db.session.query(Plot.crop).distinct().count()
+
+    today = date.today()
+    fourteen_days_later = today + timedelta(days=14)
+    upcoming_harvests = Plot.query.filter(
+        Plot.expected_harvest_date >= today,
+        Plot.expected_harvest_date <= fourteen_days_later
+    ).count()
+
+    crop_groups = db.session.query(
+        Plot.crop,
+        db.func.count(Plot.id).label("count")
+    ).group_by(Plot.crop).order_by(db.func.count(Plot.id).desc()).all()
+
+    crop_distribution = [
+        {"crop_name": crop, "count": count}
+        for crop, count in crop_groups
+    ]
+
+    return jsonify({
+        "total_plots": total_plots,
+        "crop_types": crop_types,
+        "upcoming_harvests": upcoming_harvests,
+        "crop_distribution": crop_distribution,
+    })
 
 
 with app.app_context():

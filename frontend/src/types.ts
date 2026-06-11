@@ -30,3 +30,15 @@ export interface HarvestRecordFormValues {
   harvest_weight: number | null;
   remark: string;
 }
+
+export interface CropDistribution {
+  crop_name: string;
+  count: number;
+}
+
+export interface Statistics {
+  total_plots: number;
+  crop_types: number;
+  upcoming_harvests: number;
+  crop_distribution: CropDistribution[];
+}

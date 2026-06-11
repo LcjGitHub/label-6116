@@ -1,8 +1,9 @@
 import { AppShell, Button, Group, Title } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { IconLeaf, IconList, IconAcorn } from '@tabler/icons-react';
+import { IconLeaf, IconList, IconAcorn, IconChartPie } from '@tabler/icons-react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { ClaimFormPage } from './pages/ClaimFormPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { HarvestRecordListPage } from './pages/HarvestRecordListPage';
 import { PlotListPage } from './pages/PlotListPage';
 
@@ -18,6 +19,14 @@ export function App() {
               <Title order={4}>社区菜园认领</Title>
             </Group>
             <Group gap="xs">
+              <Button
+                component={NavLink}
+                to="/dashboard"
+                variant="subtle"
+                leftSection={<IconChartPie size={16} />}
+              >
+                数据概览
+              </Button>
               <Button
                 component={NavLink}
                 to="/"
@@ -43,6 +52,7 @@ export function App() {
 
         <AppShell.Main>
           <Routes>
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/" element={<PlotListPage />} />
             <Route path="/harvest-records" element={<HarvestRecordListPage />} />
             <Route path="/register" element={<ClaimFormPage />} />
