@@ -14,12 +14,14 @@ import {
   Title,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
+import { useDebouncedValue } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconRefresh, IconTrash } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { createHarvestRecord, deleteHarvestRecord, fetchHarvestRecords, fetchPlots } from '../api/client';
+import { useHarvestFilterStore } from '../store/harvestFilterStore';
 import type { HarvestRecord as HarvestRecordType, HarvestRecordFormValues, Plot } from '../types';
 
 function formatDate(value: string) {
@@ -27,13 +29,20 @@ function formatDate(value: string) {
 }
 
 export function HarvestRecordListPage() {
+  const { plotId, startDate, endDate, resetKey, setPlotId, setStartDate, setEndDate, reset } = useHarvestFilterStore();
   const [records, setRecords] = useState<HarvestRecordType[]>([]);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [filterPlotId, setFilterPlotId] = useState<number | null>(null);
+
+  const [debouncedPlotId] = useDebouncedValue(plotId, 300);
+  const [debouncedStartDate] = useDebouncedValue(startDate, 300);
+  const [debouncedEndDate] = useDebouncedValue(endDate, 300);
+
+  const startDateAfterEndDate =
+    debouncedStartDate && debouncedEndDate && dayjs(debouncedStartDate).isAfter(dayjs(debouncedEndDate), 'day');
 
   const form = useForm<HarvestRecordFormValues>({
     initialValues: {
@@ -67,18 +76,22 @@ export function HarvestRecordListPage() {
   }, []);
 
   const loadRecords = useCallback(async () => {
+    if (startDateAfterEndDate) return;
     setLoading(true);
     setError(null);
     try {
-      const params = filterPlotId ? { plot_id: filterPlotId } : undefined;
-      const data = await fetchHarvestRecords(params);
+      const data = await fetchHarvestRecords({
+        plot_id: debouncedPlotId ?? undefined,
+        start_date: debouncedStartDate || undefined,
+        end_date: debouncedEndDate || undefined,
+      });
       setRecords(data);
     } catch {
       setError('加载收获记录失败，请确认后端服务已启动');
     } finally {
       setLoading(false);
     }
-  }, [filterPlotId]);
+  }, [debouncedPlotId, debouncedStartDate, debouncedEndDate, startDateAfterEndDate]);
 
   useEffect(() => {
     loadPlots();
@@ -150,10 +163,6 @@ export function HarvestRecordListPage() {
     label: `${plot.plot_number} - ${plot.crop} (${plot.claimer})`,
   }));
 
-  const handleResetFilter = () => {
-    setFilterPlotId(null);
-  };
-
   return (
     <Container size="lg" py="xl">
       <Stack gap="lg">
@@ -162,22 +171,51 @@ export function HarvestRecordListPage() {
         </Group>
 
         <Paper withBorder p="md" radius="md">
-          <Group align="flex-end">
-            <Select
-              label="地块筛选"
-              placeholder="选择地块筛选"
-              data={plotOptions}
-              value={filterPlotId ? String(filterPlotId) : null}
-              onChange={(value) => setFilterPlotId(value ? Number(value) : null)}
-              style={{ flex: 1 }}
-              clearable
-              searchable
-            />
-            <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={handleResetFilter}>
-              重置
-            </Button>
-          </Group>
+          <Stack gap="md">
+            <Group align="flex-end" grow>
+              <Select
+                label="地块"
+                placeholder="选择地块筛选"
+                data={plotOptions}
+                value={plotId ? String(plotId) : null}
+                onChange={(value) => setPlotId(value ? Number(value) : null)}
+                clearable
+                searchable
+              />
+            </Group>
+            <Group align="flex-end" grow>
+              <DateInput
+                key={`start-${resetKey}`}
+                label="收获开始日期"
+                placeholder="选择开始日期"
+                valueFormat="YYYY-MM-DD"
+                value={startDate ? dayjs(startDate).toDate() : null}
+                onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+                clearable
+                error={startDateAfterEndDate}
+              />
+              <DateInput
+                key={`end-${resetKey}`}
+                label="收获结束日期"
+                placeholder="选择结束日期"
+                valueFormat="YYYY-MM-DD"
+                value={endDate ? dayjs(endDate).toDate() : null}
+                onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+                clearable
+                error={startDateAfterEndDate}
+              />
+              <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
+                重置
+              </Button>
+            </Group>
+          </Stack>
         </Paper>
+
+        {startDateAfterEndDate && (
+          <Text c="red" size="sm">
+            开始日期不能晚于结束日期
+          </Text>
+        )}
 
         <Paper withBorder p="lg" radius="md">
           <Title order={4} mb="md">

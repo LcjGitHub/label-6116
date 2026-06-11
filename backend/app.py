@@ -257,6 +257,22 @@ def list_harvest_records():
         except ValueError:
             pass
 
+    start_date_str = request.args.get("start_date", "").strip()
+    end_date_str = request.args.get("end_date", "").strip()
+
+    if start_date_str:
+        try:
+            start_date_val = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            query = query.filter(HarvestRecord.actual_harvest_date >= start_date_val)
+        except ValueError:
+            pass
+    if end_date_str:
+        try:
+            end_date_val = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            query = query.filter(HarvestRecord.actual_harvest_date <= end_date_val)
+        except ValueError:
+            pass
+
     records = query.order_by(HarvestRecord.actual_harvest_date.desc(), HarvestRecord.id.desc()).all()
     return jsonify([record.to_dict() for record in records])
 
