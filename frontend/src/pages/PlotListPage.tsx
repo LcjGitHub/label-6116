@@ -52,7 +52,9 @@ export function PlotListPage() {
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingPlot, setDeletingPlot] = useState<Plot | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
 
@@ -107,15 +109,29 @@ export function PlotListPage() {
     loadPlots();
   }, [loadPlots]);
 
-  const handleDelete = async (id: number) => {
-    setDeletingId(id);
+  const handleDelete = (plot: Plot) => {
+    setDeletingPlot(plot);
+    setDeleteModalOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setDeletingPlot(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingPlot) return;
+    setDeleteSubmitting(true);
     try {
-      await deletePlot(id);
+      await deletePlot(deletingPlot.id);
+      notifications.show({ title: '删除成功', message: '地块信息已删除', color: 'green' });
+      setDeleteModalOpen(false);
+      setDeletingPlot(null);
       await loadPlots();
     } catch {
-      setError('删除失败，请稍后重试');
+      notifications.show({ title: '删除失败', message: '删除失败，请稍后重试', color: 'red' });
     } finally {
-      setDeletingId(null);
+      setDeleteSubmitting(false);
     }
   };
 
@@ -300,8 +316,8 @@ export function PlotListPage() {
                           variant="subtle"
                           color="red"
                           aria-label="删除"
-                          loading={deletingId === plot.id}
-                          onClick={() => handleDelete(plot.id)}
+                          title="删除地块"
+                          onClick={() => handleDelete(plot)}
                         >
                           <IconTrash size={16} />
                         </ActionIcon>
@@ -408,6 +424,45 @@ export function PlotListPage() {
             </Group>
           </Stack>
         </form>
+      </Modal>
+
+      <Modal
+        opened={deleteModalOpen}
+        onClose={handleCancelDelete}
+        title="确认删除"
+        size="sm"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            您即将删除以下地块信息，此操作不可撤销，请确认：
+          </Text>
+          <Paper withBorder p="md" radius="md" bg="gray.0">
+            <Stack gap="xs">
+              <Group justify="space-between">
+                <Text size="sm" c="dimmed">地块编号</Text>
+                <Text size="sm" fw={600}>{deletingPlot?.plot_number}</Text>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm" c="dimmed">认领人</Text>
+                <Text size="sm" fw={600}>{deletingPlot?.claimer}</Text>
+              </Group>
+            </Stack>
+          </Paper>
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={handleCancelDelete} disabled={deleteSubmitting}>
+              取消
+            </Button>
+            <Button
+              color="red"
+              onClick={handleConfirmDelete}
+              loading={deleteSubmitting}
+              disabled={deleteSubmitting}
+            >
+              确认删除
+            </Button>
+          </Group>
+        </Stack>
       </Modal>
     </Container>
   );
