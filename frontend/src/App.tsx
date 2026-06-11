@@ -1,10 +1,11 @@
 import { AppShell, Button, Group, Title } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant } from '@tabler/icons-react';
+import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant, IconFlask } from '@tabler/icons-react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { ClaimFormPage } from './pages/ClaimFormPage';
 import { CropListPage } from './pages/CropListPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { FertilizationRecordListPage } from './pages/FertilizationRecordListPage';
 import { HarvestRecordListPage } from './pages/HarvestRecordListPage';
 import { PlotListPage } from './pages/PlotListPage';
 import { PlotLogPage } from './pages/PlotLogPage';
@@ -50,6 +51,15 @@ export function App() {
               </Button>
               <Button
                 component={NavLink}
+                to="/fertilization-records"
+                variant="subtle"
+                leftSection={<IconFlask size={16} />}
+                size="sm"
+              >
+                施肥记录
+              </Button>
+              <Button
+                component={NavLink}
                 to="/crops"
                 variant="subtle"
                 leftSection={<IconPlant size={16} />}
@@ -70,6 +80,7 @@ export function App() {
             <Route path="/" element={<PlotListPage />} />
             <Route path="/plots/:plot_id/logs" element={<PlotLogPage />} />
             <Route path="/harvest-records" element={<HarvestRecordListPage />} />
+            <Route path="/fertilization-records" element={<FertilizationRecordListPage />} />
             <Route path="/crops" element={<CropListPage />} />
             <Route path="/register" element={<ClaimFormPage />} />
           </Routes>

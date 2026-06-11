@@ -246,3 +246,42 @@ def validate_crop_payload(data, partial=False):
             raise ValueError("适宜季节不能为空")
 
     return payload
+
+
+def validate_fertilization_payload(data):
+    required_fields = ["plot_id", "fertilization_date", "fertilizer_name", "amount_kg", "operator"]
+    missing = [field for field in required_fields if data.get(field) is None or str(data.get(field)).strip() == ""]
+    if missing:
+        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+
+    try:
+        payload["plot_id"] = int(data.get("plot_id"))
+    except (ValueError, TypeError):
+        raise ValueError("地块编号格式错误")
+
+    plot = db.session.get(Plot, payload["plot_id"])
+    if not plot:
+        raise ValueError("关联地块不存在")
+
+    payload["fertilization_date"] = parse_date(data.get("fertilization_date"), "施肥日期")
+
+    fertilizer_name = (data.get("fertilizer_name") or "").strip()
+    if not fertilizer_name:
+        raise ValueError("肥料名称不能为空")
+    payload["fertilizer_name"] = fertilizer_name
+
+    try:
+        payload["amount_kg"] = float(data.get("amount_kg"))
+        if payload["amount_kg"] <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        raise ValueError("用量必须为大于0的数字")
+
+    operator = (data.get("operator") or "").strip()
+    if not operator:
+        raise ValueError("操作人不能为空")
+    payload["operator"] = operator
+
+    return payload

@@ -86,3 +86,21 @@ export interface PlantingLogFormValues {
   content: string;
   recorder: string;
 }
+
+export interface FertilizationRecord {
+  id: number;
+  plot_id: number;
+  plot_number: string;
+  fertilization_date: string;
+  fertilizer_name: string;
+  amount_kg: number;
+  operator: string;
+}
+
+export interface FertilizationRecordFormValues {
+  plot_id: number | null;
+  fertilization_date: Date | null;
+  fertilizer_name: string;
+  amount_kg: number | null;
+  operator: string;
+}

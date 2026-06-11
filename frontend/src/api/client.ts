@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Crop, HarvestRecord, PlantingLog, Plot, PlotStatus, Statistics, UpdatePlotPayload } from '../types';
+import type { Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, PlotStatus, Statistics, UpdatePlotPayload } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -90,5 +90,21 @@ export async function createPlantingLog(payload: {
   recorder: string;
 }): Promise<PlantingLog> {
   const { data } = await api.post<PlantingLog>('/planting-logs', payload);
+  return data;
+}
+
+export async function fetchFertilizationRecords(params?: { plot_id?: number; plot_number?: string }): Promise<FertilizationRecord[]> {
+  const { data } = await api.get<FertilizationRecord[]>('/fertilization-records', { params });
+  return data;
+}
+
+export async function createFertilizationRecord(payload: {
+  plot_id: number;
+  fertilization_date: string;
+  fertilizer_name: string;
+  amount_kg: number;
+  operator: string;
+}): Promise<FertilizationRecord> {
+  const { data } = await api.post<FertilizationRecord>('/fertilization-records', payload);
   return data;
 }

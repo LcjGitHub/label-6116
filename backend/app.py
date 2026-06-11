@@ -4,11 +4,12 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import PLOT_STATUSES, Crop, HarvestRecord, PlantingLog, Plot, db
+from models import PLOT_STATUSES, Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, db
 from seed import seed_database
 from validators import (
     validate_batch_delete_payload,
     validate_crop_payload,
+    validate_fertilization_payload,
     validate_harvest_payload,
     validate_planting_log_payload,
     validate_plot_payload,
@@ -230,6 +231,40 @@ def create_planting_log():
     db.session.add(log)
     db.session.commit()
     return jsonify(log.to_dict()), 201
+
+
+@app.route("/api/fertilization-records", methods=["GET"])
+def list_fertilization_records():
+    query = FertilizationRecord.query.join(Plot)
+
+    plot_id = request.args.get("plot_id", "").strip()
+    if plot_id:
+        try:
+            plot_id_int = int(plot_id)
+            query = query.filter(FertilizationRecord.plot_id == plot_id_int)
+        except ValueError:
+            pass
+
+    plot_number = request.args.get("plot_number", "").strip()
+    if plot_number:
+        query = query.filter(Plot.plot_number == plot_number)
+
+    records = query.order_by(FertilizationRecord.fertilization_date.desc(), FertilizationRecord.id.desc()).all()
+    return jsonify([record.to_dict() for record in records])
+
+
+@app.route("/api/fertilization-records", methods=["POST"])
+def create_fertilization_record():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_fertilization_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    record = FertilizationRecord(**payload)
+    db.session.add(record)
+    db.session.commit()
+    return jsonify(record.to_dict()), 201
 
 
 @app.route("/api/statistics", methods=["GET"])

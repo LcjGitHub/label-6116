@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Crop, HarvestRecord, PlantingLog, Plot, db
+from models import Crop, FertilizationRecord, HarvestRecord, PlantingLog, Plot, db
 
 SEED_DATA = [
     {
@@ -160,6 +160,79 @@ SEED_PLANTING_LOGS = [
     },
 ]
 
+SEED_FERTILIZATION_RECORDS = [
+    {
+        "plot_number": "A-01",
+        "fertilization_date": date(2026, 3, 15),
+        "fertilizer_name": "复合肥",
+        "amount_kg": 2.5,
+        "operator": "张三",
+    },
+    {
+        "plot_number": "A-01",
+        "fertilization_date": date(2026, 4, 20),
+        "fertilizer_name": "尿素",
+        "amount_kg": 1.2,
+        "operator": "张三",
+    },
+    {
+        "plot_number": "A-02",
+        "fertilization_date": date(2026, 3, 20),
+        "fertilizer_name": "复合肥",
+        "amount_kg": 2.0,
+        "operator": "李四",
+    },
+    {
+        "plot_number": "A-02",
+        "fertilization_date": date(2026, 4, 15),
+        "fertilizer_name": "磷酸二氢钾",
+        "amount_kg": 0.8,
+        "operator": "李四",
+    },
+    {
+        "plot_number": "B-01",
+        "fertilization_date": date(2026, 3, 25),
+        "fertilizer_name": "有机肥",
+        "amount_kg": 5.0,
+        "operator": "王五",
+    },
+    {
+        "plot_number": "B-01",
+        "fertilization_date": date(2026, 5, 10),
+        "fertilizer_name": "复合肥",
+        "amount_kg": 1.5,
+        "operator": "王五",
+    },
+    {
+        "plot_number": "B-02",
+        "fertilization_date": date(2026, 3, 28),
+        "fertilizer_name": "复合肥",
+        "amount_kg": 2.2,
+        "operator": "赵六",
+    },
+    {
+        "plot_number": "B-02",
+        "fertilization_date": date(2026, 5, 15),
+        "fertilizer_name": "磷钾肥",
+        "amount_kg": 1.0,
+        "operator": "赵六",
+    },
+    {
+        "plot_number": "C-01",
+        "fertilization_date": date(2026, 3, 25),
+        "fertilizer_name": "氮肥",
+        "amount_kg": 1.0,
+        "operator": "孙七",
+    },
+    {
+        "plot_number": "C-02",
+        "fertilization_date": date(2026, 2, 15),
+        "fertilizer_name": "复合肥",
+        "amount_kg": 1.8,
+        "operator": "周八",
+    },
+]
+
 
 def seed_database():
     plots_seeded = False
@@ -192,4 +265,14 @@ def seed_database():
                 log_data = {k: v for k, v in item.items() if k != "plot_number"}
                 log_data["plot_id"] = plot.id
                 db.session.add(PlantingLog(**log_data))
+        db.session.commit()
+
+    if FertilizationRecord.query.count() == 0:
+        for item in SEED_FERTILIZATION_RECORDS:
+            plot_number = item["plot_number"]
+            plot = Plot.query.filter_by(plot_number=plot_number).first()
+            if plot:
+                record_data = {k: v for k, v in item.items() if k != "plot_number"}
+                record_data["plot_id"] = plot.id
+                db.session.add(FertilizationRecord(**record_data))
         db.session.commit()

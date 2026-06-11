@@ -20,6 +20,7 @@ class Plot(db.Model):
 
     harvest_records = db.relationship("HarvestRecord", back_populates="plot", cascade="all, delete-orphan")
     planting_logs = db.relationship("PlantingLog", back_populates="plot", cascade="all, delete-orphan")
+    fertilization_records = db.relationship("FertilizationRecord", back_populates="plot", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -93,4 +94,28 @@ class PlantingLog(db.Model):
             "log_date": self.log_date.isoformat(),
             "content": self.content,
             "recorder": self.recorder,
+        }
+
+
+class FertilizationRecord(db.Model):
+    __tablename__ = "fertilization_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    plot_id = db.Column(db.Integer, db.ForeignKey("plots.id"), nullable=False)
+    fertilization_date = db.Column(db.Date, nullable=False)
+    fertilizer_name = db.Column(db.String(64), nullable=False)
+    amount_kg = db.Column(db.Float, nullable=False)
+    operator = db.Column(db.String(64), nullable=False)
+
+    plot = db.relationship("Plot", back_populates="fertilization_records")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "plot_id": self.plot_id,
+            "plot_number": self.plot.plot_number if self.plot else None,
+            "fertilization_date": self.fertilization_date.isoformat(),
+            "fertilizer_name": self.fertilizer_name,
+            "amount_kg": self.amount_kg,
+            "operator": self.operator,
         }
