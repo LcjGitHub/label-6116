@@ -66,3 +66,37 @@ npm run dev
 | DELETE | `/api/plots/:id` | 删除 |
 
 前端通过 Vite 代理将 `/api` 转发至 `http://localhost:7000`。
+
+## CI 检查
+
+项目配置了 GitHub Actions 持续集成流水线，每次推送或合并请求都会自动执行后端导入检查和前端构建验证。
+
+### 本地手动执行 CI 检查
+
+你可以在本地手动执行与 CI 相同的检查步骤：
+
+#### 后端导入检查
+
+```bash
+cd backend
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+# source .venv/bin/activate
+
+pip install -r requirements-dev.txt
+python -c "import app; print('Application imported successfully')"
+```
+
+#### 前端构建检查
+
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+如果两个检查都成功通过，说明代码可以正常构建和加载。
