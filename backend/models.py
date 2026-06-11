@@ -26,8 +26,8 @@ class Plot(db.Model):
     fertilization_records = db.relationship("FertilizationRecord", back_populates="plot", cascade="all, delete-orphan")
     pest_reports = db.relationship("PestReport", back_populates="plot", cascade="all, delete-orphan")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_stats: bool = False):
+        data = {
             "id": self.id,
             "plot_number": self.plot_number,
             "claimer": self.claimer,
@@ -36,6 +36,18 @@ class Plot(db.Model):
             "expected_harvest_date": self.expected_harvest_date.isoformat(),
             "status": self.status,
         }
+        if include_stats:
+            harvest_records = sorted(self.harvest_records, key=lambda r: r.actual_harvest_date, reverse=True)
+            planting_logs = sorted(self.planting_logs, key=lambda l: l.log_date, reverse=True)
+            data["harvest_record_count"] = len(harvest_records)
+            data["planting_log_count"] = len(planting_logs)
+            data["latest_harvest_date"] = harvest_records[0].actual_harvest_date.isoformat() if harvest_records else None
+            data["latest_log_summary"] = (
+                planting_logs[0].content[:50] + "..." if planting_logs and len(planting_logs[0].content) > 50
+                else planting_logs[0].content if planting_logs
+                else None
+            )
+        return data
 
 
 class HarvestRecord(db.Model):

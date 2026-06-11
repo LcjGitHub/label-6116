@@ -10,6 +10,10 @@ export interface Plot {
   claim_date: string;
   expected_harvest_date: string;
   status: PlotStatus;
+  harvest_record_count?: number;
+  planting_log_count?: number;
+  latest_harvest_date?: string | null;
+  latest_log_summary?: string | null;
 }
 
 export interface PlotFormValues {

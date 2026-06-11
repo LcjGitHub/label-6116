@@ -13,6 +13,11 @@ export async function fetchPlots(params?: { plot_number?: string; claimer?: stri
   return data;
 }
 
+export async function fetchPlot(id: number): Promise<Plot> {
+  const { data } = await api.get<Plot>(`/plots/${id}`);
+  return data;
+}
+
 export async function createPlot(payload: {
   plot_number: string;
   claimer: string;

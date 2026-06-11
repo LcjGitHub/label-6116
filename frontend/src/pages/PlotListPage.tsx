@@ -22,7 +22,7 @@ import { DateInput } from '@mantine/dates';
 import { useDebouncedValue } from '@mantine/hooks';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
-import { IconFileText, IconPencil, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { IconFileText, IconInfoCircle, IconPencil, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -401,7 +401,7 @@ export function PlotListPage() {
                   <Table.Th w={100}>状态</Table.Th>
                   <Table.Th>认领日期</Table.Th>
                   <Table.Th>预计收获日</Table.Th>
-                  <Table.Th w={180}>操作</Table.Th>
+                  <Table.Th w={220}>操作</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -430,6 +430,16 @@ export function PlotListPage() {
                     <Table.Td>{formatDate(plot.expected_harvest_date)}</Table.Td>
                     <Table.Td>
                       <Group gap="xs">
+                        <ActionIcon
+                          component={Link}
+                          to={`/plots/${plot.id}`}
+                          variant="subtle"
+                          color="violet"
+                          aria-label="详情"
+                          title="地块详情"
+                        >
+                          <IconInfoCircle size={16} />
+                        </ActionIcon>
                         <ActionIcon
                           component={Link}
                           to={`/plots/${plot.id}/logs`}

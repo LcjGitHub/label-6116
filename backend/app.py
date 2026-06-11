@@ -70,7 +70,7 @@ def get_plot(plot_id):
     plot = db.session.get(Plot, plot_id)
     if not plot:
         return jsonify({"error": "地块不存在"}), 404
-    return jsonify(plot.to_dict())
+    return jsonify(plot.to_dict(include_stats=True))
 
 
 @app.route("/api/plots", methods=["POST"])

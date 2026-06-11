@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { FertilizationRecordListPage } from './pages/FertilizationRecordListPage';
 import { HarvestRecordListPage } from './pages/HarvestRecordListPage';
 import { PestReportListPage } from './pages/PestReportListPage';
+import { PlotDetailPage } from './pages/PlotDetailPage';
 import { PlotListPage } from './pages/PlotListPage';
 import { PlotLogPage } from './pages/PlotLogPage';
 
@@ -88,6 +89,7 @@ export function App() {
           <Routes>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/" element={<PlotListPage />} />
+            <Route path="/plots/:plot_id" element={<PlotDetailPage />} />
             <Route path="/plots/:plot_id/logs" element={<PlotLogPage />} />
             <Route path="/harvest-records" element={<HarvestRecordListPage />} />
             <Route path="/fertilization-records" element={<FertilizationRecordListPage />} />
