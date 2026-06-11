@@ -11,14 +11,14 @@ export function App() {
   return (
     <>
       <Notifications position="top-right" />
-      <AppShell header={{ height: 60 }} padding="md">
-        <AppShell.Header px="md">
-          <Group h="100%" justify="space-between">
+      <AppShell header={{ height: 'auto' }} padding="md">
+        <AppShell.Header px="md" py="sm">
+          <Group justify="space-between" align="center" wrap="wrap" gap="md">
             <Group gap="xs">
               <IconLeaf size={24} color="var(--mantine-color-green-7)" />
               <Title order={4}>社区菜园认领</Title>
             </Group>
-            <Group gap="xs">
+            <Group gap="xs" wrap="wrap">
               <Button
                 component={NavLink}
                 to="/dashboard"
