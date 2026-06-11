@@ -89,7 +89,7 @@ export function PlotListPage() {
   return (
     <Container size="lg" py="xl">
       <Stack gap="lg">
-        <Group justify="space-between" align="center">
+        <Group justify="space-between" align="center" wrap="wrap" gap="md">
           <Title order={2}>地块列表</Title>
           <Button component={Link} to="/register" leftSection={<IconPlus size={16} />}>
             认领登记
@@ -148,7 +148,7 @@ export function PlotListPage() {
                   <Table.Th>地块编号</Table.Th>
                   <Table.Th>认领人</Table.Th>
                   <Table.Th>作物</Table.Th>
-                  <Table.Th>状态</Table.Th>
+                  <Table.Th w={100}>状态</Table.Th>
                   <Table.Th>认领日期</Table.Th>
                   <Table.Th>预计收获日</Table.Th>
                   <Table.Th w={80}>操作</Table.Th>
@@ -161,7 +161,11 @@ export function PlotListPage() {
                     <Table.Td>{plot.claimer}</Table.Td>
                     <Table.Td>{plot.crop}</Table.Td>
                     <Table.Td>
-                      <Badge color={getStatusColor(plot.status)} size="md">
+                      <Badge
+                        color={getStatusColor(plot.status)}
+                        size="md"
+                        style={{ minWidth: 60, paddingLeft: 10, paddingRight: 10 }}
+                      >
                         {plot.status}
                       </Badge>
                     </Table.Td>

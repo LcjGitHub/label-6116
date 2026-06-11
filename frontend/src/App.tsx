@@ -12,8 +12,8 @@ export function App() {
   return (
     <>
       <Notifications position="top-right" />
-      <AppShell header={{ height: 60 }} padding="md">
-        <AppShell.Header px="md" py="sm">
+      <AppShell header={{ height: 'auto' }} padding="md">
+        <AppShell.Header px="md" py="sm" withBorder>
           <Group justify="space-between" align="center" wrap="wrap" gap="md">
             <Group gap="xs">
               <IconLeaf size={24} color="var(--mantine-color-green-7)" />
@@ -25,6 +25,7 @@ export function App() {
                 to="/dashboard"
                 variant="subtle"
                 leftSection={<IconChartPie size={16} />}
+                size="sm"
               >
                 数据概览
               </Button>
@@ -33,6 +34,7 @@ export function App() {
                 to="/"
                 variant="subtle"
                 leftSection={<IconList size={16} />}
+                size="sm"
               >
                 地块列表
               </Button>
@@ -41,6 +43,7 @@ export function App() {
                 to="/harvest-records"
                 variant="subtle"
                 leftSection={<IconAcorn size={16} />}
+                size="sm"
               >
                 收获记录
               </Button>
@@ -49,10 +52,11 @@ export function App() {
                 to="/crops"
                 variant="subtle"
                 leftSection={<IconPlant size={16} />}
+                size="sm"
               >
                 作物字典
               </Button>
-              <Button component={NavLink} to="/register" variant="light">
+              <Button component={NavLink} to="/register" variant="light" size="sm">
                 认领登记
               </Button>
             </Group>

@@ -43,6 +43,14 @@ SEED_DATA = [
         "expected_harvest_date": date(2026, 5, 10),
         "status": "已收获",
     },
+    {
+        "plot_number": "C-02",
+        "claimer": "周八",
+        "crop": "白菜",
+        "claim_date": date(2026, 2, 1),
+        "expected_harvest_date": date(2026, 4, 1),
+        "status": "空闲",
+    },
 ]
 
 SEED_HARVEST_RECORDS = [
