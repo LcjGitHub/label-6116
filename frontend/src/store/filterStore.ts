@@ -8,6 +8,7 @@ interface FilterState {
   status: PlotStatus | '';
   startDate: string;
   endDate: string;
+  resetKey: number;
   setPlotNumber: (value: string) => void;
   setClaimer: (value: string) => void;
   setCrop: (value: string) => void;
@@ -24,11 +25,12 @@ export const useFilterStore = create<FilterState>((set) => ({
   status: '',
   startDate: '',
   endDate: '',
+  resetKey: 0,
   setPlotNumber: (value) => set({ plotNumber: value }),
   setClaimer: (value) => set({ claimer: value }),
   setCrop: (value) => set({ crop: value }),
   setStatus: (value) => set({ status: value }),
   setStartDate: (value) => set({ startDate: value }),
   setEndDate: (value) => set({ endDate: value }),
-  reset: () => set({ plotNumber: '', claimer: '', crop: '', status: '', startDate: '', endDate: '' }),
+  reset: () => set((state) => ({ plotNumber: '', claimer: '', crop: '', status: '', startDate: '', endDate: '', resetKey: state.resetKey + 1 })),
 }));

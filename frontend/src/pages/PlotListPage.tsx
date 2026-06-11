@@ -49,7 +49,7 @@ function getStatusColor(status: PlotStatus): string {
 }
 
 export function PlotListPage() {
-  const { plotNumber, claimer, crop, status, startDate, endDate, setPlotNumber, setClaimer, setCrop, setStatus, setStartDate, setEndDate, reset } = useFilterStore();
+  const { plotNumber, claimer, crop, status, startDate, endDate, resetKey, setPlotNumber, setClaimer, setCrop, setStatus, setStartDate, setEndDate, reset } = useFilterStore();
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +66,9 @@ export function PlotListPage() {
   const [debouncedCrop] = useDebouncedValue(crop, 300);
   const [debouncedStartDate] = useDebouncedValue(startDate, 300);
   const [debouncedEndDate] = useDebouncedValue(endDate, 300);
+
+  const startDateAfterEndDate =
+    debouncedStartDate && debouncedEndDate && dayjs(debouncedStartDate).isAfter(dayjs(debouncedEndDate), 'day');
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
@@ -98,6 +101,7 @@ export function PlotListPage() {
   });
 
   const loadPlots = useCallback(async () => {
+    if (startDateAfterEndDate) return;
     setLoading(true);
     setError(null);
     try {
@@ -115,7 +119,7 @@ export function PlotListPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status, debouncedStartDate, debouncedEndDate]);
+  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status, debouncedStartDate, debouncedEndDate, startDateAfterEndDate]);
 
   useEffect(() => {
     loadPlots();
@@ -288,59 +292,67 @@ export function PlotListPage() {
         </Group>
 
         <Paper withBorder p="md" radius="md">
-          <Group align="flex-end">
-            <TextInput
-              label="认领人"
-              placeholder="筛选认领人"
-              value={claimer}
-              onChange={(event) => setClaimer(event.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <TextInput
-              label="地块编号"
-              placeholder="筛选地块编号"
-              value={plotNumber}
-              onChange={(event) => setPlotNumber(event.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <TextInput
-              label="作物"
-              placeholder="筛选作物"
-              value={crop}
-              onChange={(event) => setCrop(event.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
-            <Select
-              label="状态"
-              placeholder="筛选状态"
-              value={status}
-              onChange={(value) => setStatus((value as PlotStatus | '') || '')}
-              data={statusOptions}
-              style={{ flex: 1 }}
-            />
-            <DateInput
-              label="认领开始日期"
-              placeholder="选择开始日期"
-              valueFormat="YYYY-MM-DD"
-              value={startDate ? dayjs(startDate).toDate() : null}
-              onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
-              clearable
-              style={{ flex: 1 }}
-            />
-            <DateInput
-              label="认领结束日期"
-              placeholder="选择结束日期"
-              valueFormat="YYYY-MM-DD"
-              value={endDate ? dayjs(endDate).toDate() : null}
-              onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
-              clearable
-              style={{ flex: 1 }}
-            />
-            <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
-              重置
-            </Button>
-          </Group>
+          <Stack gap="md">
+            <Group align="flex-end" grow>
+              <TextInput
+                label="认领人"
+                placeholder="筛选认领人"
+                value={claimer}
+                onChange={(event) => setClaimer(event.currentTarget.value)}
+              />
+              <TextInput
+                label="地块编号"
+                placeholder="筛选地块编号"
+                value={plotNumber}
+                onChange={(event) => setPlotNumber(event.currentTarget.value)}
+              />
+              <TextInput
+                label="作物"
+                placeholder="筛选作物"
+                value={crop}
+                onChange={(event) => setCrop(event.currentTarget.value)}
+              />
+              <Select
+                label="状态"
+                placeholder="筛选状态"
+                value={status}
+                onChange={(value) => setStatus((value as PlotStatus | '') || '')}
+                data={statusOptions}
+              />
+            </Group>
+            <Group align="flex-end" grow>
+              <DateInput
+                key={`start-${resetKey}`}
+                label="认领开始日期"
+                placeholder="选择开始日期"
+                valueFormat="YYYY-MM-DD"
+                value={startDate ? dayjs(startDate).toDate() : null}
+                onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+                clearable
+                error={startDateAfterEndDate}
+              />
+              <DateInput
+                key={`end-${resetKey}`}
+                label="认领结束日期"
+                placeholder="选择结束日期"
+                valueFormat="YYYY-MM-DD"
+                value={endDate ? dayjs(endDate).toDate() : null}
+                onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+                clearable
+                error={startDateAfterEndDate}
+              />
+              <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
+                重置
+              </Button>
+            </Group>
+          </Stack>
         </Paper>
+
+        {startDateAfterEndDate && (
+          <Text c="red" size="sm">
+            开始日期不能晚于结束日期
+          </Text>
+        )}
 
         {selectedIds.length > 0 && (
           <Group gap="sm" align="center">
