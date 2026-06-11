@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import Crop, HarvestRecord, Plot, db
+from models import PLOT_STATUSES, Crop, HarvestRecord, Plot, db
 from seed import seed_database
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -66,6 +66,13 @@ def validate_plot_payload(data, partial=False):
     ):
         raise ValueError("预计收获日不能早于认领日期")
 
+    if "status" in data:
+        status = (data.get("status") or "").strip()
+        if status:
+            if status not in PLOT_STATUSES:
+                raise ValueError(f"状态必须为以下值之一: {', '.join(PLOT_STATUSES)}")
+            payload["status"] = status
+
     return payload
 
 
@@ -75,11 +82,14 @@ def list_plots():
 
     claimer = request.args.get("claimer", "").strip()
     crop = request.args.get("crop", "").strip()
+    status = request.args.get("status", "").strip()
 
     if claimer:
         query = query.filter(Plot.claimer.contains(claimer))
     if crop:
         query = query.filter(Plot.crop.contains(crop))
+    if status:
+        query = query.filter(Plot.status == status)
 
     plots = query.order_by(Plot.plot_number).all()
     return jsonify([plot.to_dict() for plot in plots])

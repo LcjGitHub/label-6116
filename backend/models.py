@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+PLOT_STATUSES = ["种植中", "已收获", "空闲"]
+
 
 class Plot(db.Model):
     __tablename__ = "plots"
@@ -14,6 +16,7 @@ class Plot(db.Model):
     crop = db.Column(db.String(64), nullable=False)
     claim_date = db.Column(db.Date, nullable=False)
     expected_harvest_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(16), nullable=False, default="种植中")
 
     harvest_records = db.relationship("HarvestRecord", back_populates="plot", cascade="all, delete-orphan")
 
@@ -25,6 +28,7 @@ class Plot(db.Model):
             "crop": self.crop,
             "claim_date": self.claim_date.isoformat(),
             "expected_harvest_date": self.expected_harvest_date.isoformat(),
+            "status": self.status,
         }
 
 

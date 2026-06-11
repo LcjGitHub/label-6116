@@ -9,6 +9,7 @@ SEED_DATA = [
         "crop": "番茄",
         "claim_date": date(2026, 3, 1),
         "expected_harvest_date": date(2026, 6, 15),
+        "status": "已收获",
     },
     {
         "plot_number": "A-02",
@@ -16,6 +17,7 @@ SEED_DATA = [
         "crop": "黄瓜",
         "claim_date": date(2026, 3, 5),
         "expected_harvest_date": date(2026, 5, 20),
+        "status": "已收获",
     },
     {
         "plot_number": "B-01",
@@ -23,6 +25,7 @@ SEED_DATA = [
         "crop": "辣椒",
         "claim_date": date(2026, 3, 10),
         "expected_harvest_date": date(2026, 7, 1),
+        "status": "种植中",
     },
     {
         "plot_number": "B-02",
@@ -30,6 +33,7 @@ SEED_DATA = [
         "crop": "茄子",
         "claim_date": date(2026, 3, 12),
         "expected_harvest_date": date(2026, 6, 30),
+        "status": "种植中",
     },
     {
         "plot_number": "C-01",
@@ -37,6 +41,7 @@ SEED_DATA = [
         "crop": "生菜",
         "claim_date": date(2026, 3, 15),
         "expected_harvest_date": date(2026, 5, 10),
+        "status": "已收获",
     },
 ]
 

@@ -1,10 +1,12 @@
 import {
   ActionIcon,
+  Badge,
   Button,
   Container,
   Group,
   Loader,
   Paper,
+  Select,
   Stack,
   Table,
   Text,
@@ -17,14 +19,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deletePlot, fetchPlots } from '../api/client';
 import { useFilterStore } from '../store/filterStore';
-import type { Plot } from '../types';
+import { PLOT_STATUSES } from '../types';
+import type { Plot, PlotStatus } from '../types';
 
 function formatDate(value: string) {
   return value;
 }
 
+function getStatusColor(status: PlotStatus): string {
+  switch (status) {
+    case '种植中':
+      return 'green';
+    case '已收获':
+      return 'blue';
+    case '空闲':
+      return 'gray';
+    default:
+      return 'gray';
+  }
+}
+
 export function PlotListPage() {
-  const { claimer, crop, setClaimer, setCrop, reset } = useFilterStore();
+  const { claimer, crop, status, setClaimer, setCrop, setStatus, reset } = useFilterStore();
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +55,7 @@ export function PlotListPage() {
       const data = await fetchPlots({
         claimer: debouncedClaimer || undefined,
         crop: debouncedCrop || undefined,
+        status: status || undefined,
       });
       setPlots(data);
     } catch {
@@ -46,7 +63,7 @@ export function PlotListPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedClaimer, debouncedCrop]);
+  }, [debouncedClaimer, debouncedCrop, status]);
 
   useEffect(() => {
     loadPlots();
@@ -63,6 +80,11 @@ export function PlotListPage() {
       setDeletingId(null);
     }
   };
+
+  const statusOptions = [
+    { value: '', label: '全部' },
+    ...PLOT_STATUSES.map((s) => ({ value: s, label: s })),
+  ];
 
   return (
     <Container size="lg" py="xl">
@@ -88,6 +110,14 @@ export function PlotListPage() {
               placeholder="筛选作物"
               value={crop}
               onChange={(event) => setCrop(event.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <Select
+              label="状态"
+              placeholder="筛选状态"
+              value={status}
+              onChange={(value) => setStatus((value as PlotStatus | '') || '')}
+              data={statusOptions}
               style={{ flex: 1 }}
             />
             <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
@@ -118,6 +148,7 @@ export function PlotListPage() {
                   <Table.Th>地块编号</Table.Th>
                   <Table.Th>认领人</Table.Th>
                   <Table.Th>作物</Table.Th>
+                  <Table.Th>状态</Table.Th>
                   <Table.Th>认领日期</Table.Th>
                   <Table.Th>预计收获日</Table.Th>
                   <Table.Th w={80}>操作</Table.Th>
@@ -129,6 +160,11 @@ export function PlotListPage() {
                     <Table.Td>{plot.plot_number}</Table.Td>
                     <Table.Td>{plot.claimer}</Table.Td>
                     <Table.Td>{plot.crop}</Table.Td>
+                    <Table.Td>
+                      <Badge color={getStatusColor(plot.status)} size="md">
+                        {plot.status}
+                      </Badge>
+                    </Table.Td>
                     <Table.Td>{formatDate(plot.claim_date)}</Table.Td>
                     <Table.Td>{formatDate(plot.expected_harvest_date)}</Table.Td>
                     <Table.Td>

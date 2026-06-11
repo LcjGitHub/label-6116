@@ -1,3 +1,7 @@
+export type PlotStatus = '种植中' | '已收获' | '空闲';
+
+export const PLOT_STATUSES: PlotStatus[] = ['种植中', '已收获', '空闲'];
+
 export interface Plot {
   id: number;
   plot_number: string;
@@ -5,6 +9,7 @@ export interface Plot {
   crop: string;
   claim_date: string;
   expected_harvest_date: string;
+  status: PlotStatus;
 }
 
 export interface PlotFormValues {
@@ -13,6 +18,7 @@ export interface PlotFormValues {
   crop: string;
   claim_date: Date | null;
   expected_harvest_date: Date | null;
+  status: PlotStatus;
 }
 
 export interface HarvestRecord {

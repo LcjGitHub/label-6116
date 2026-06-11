@@ -69,6 +69,7 @@ export function ClaimFormPage() {
       crop: '',
       claim_date: null,
       expected_harvest_date: null,
+      status: '种植中',
     },
     validate: {
       plot_number: (value) => (value.trim() ? null : '请输入地块编号'),
@@ -96,6 +97,7 @@ export function ClaimFormPage() {
         crop: values.crop.trim(),
         claim_date: dayjs(values.claim_date).format('YYYY-MM-DD'),
         expected_harvest_date: dayjs(values.expected_harvest_date).format('YYYY-MM-DD'),
+        status: values.status,
       });
       notifications.show({
         title: '登记成功',
