@@ -1,9 +1,10 @@
 import { AppShell, Button, Group, Title } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant, IconFlask, IconBug, IconBell } from '@tabler/icons-react';
+import { IconLeaf, IconList, IconAcorn, IconChartPie, IconPlant, IconFlask, IconBug, IconBell, IconUsers } from '@tabler/icons-react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { AnnouncementListPage } from './pages/AnnouncementListPage';
 import { ClaimFormPage } from './pages/ClaimFormPage';
+import { ClaimantListPage } from './pages/ClaimantListPage';
 import { CropListPage } from './pages/CropListPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FertilizationRecordListPage } from './pages/FertilizationRecordListPage';
@@ -81,6 +82,15 @@ export function App() {
               </Button>
               <Button
                 component={NavLink}
+                to="/claimants"
+                variant="subtle"
+                leftSection={<IconUsers size={16} />}
+                size="sm"
+              >
+                认领人通讯录
+              </Button>
+              <Button
+                component={NavLink}
                 to="/announcements"
                 variant="subtle"
                 leftSection={<IconBell size={16} />}
@@ -105,6 +115,7 @@ export function App() {
             <Route path="/fertilization-records" element={<FertilizationRecordListPage />} />
             <Route path="/pest-reports" element={<PestReportListPage />} />
             <Route path="/crops" element={<CropListPage />} />
+            <Route path="/claimants" element={<ClaimantListPage />} />
             <Route path="/announcements" element={<AnnouncementListPage />} />
             <Route path="/register" element={<ClaimFormPage />} />
           </Routes>

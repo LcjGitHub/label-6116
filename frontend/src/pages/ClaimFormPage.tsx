@@ -18,8 +18,8 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPlot, fetchCrops } from '../api/client';
-import type { Crop, PlotFormValues } from '../types';
+import { createPlot, fetchClaimants, fetchCrops } from '../api/client';
+import type { Claimant, Crop, PlotFormValues } from '../types';
 
 export function ClaimFormPage() {
   const navigate = useNavigate();
@@ -27,7 +27,11 @@ export function ClaimFormPage() {
   const [cropOptions, setCropOptions] = useState<string[]>([]);
   const [cropLoadError, setCropLoadError] = useState<string | null>(null);
   const [cropSearch, setCropSearch] = useState('');
-  const combobox = useCombobox();
+  const cropCombobox = useCombobox();
+
+  const [claimerOptions, setClaimerOptions] = useState<string[]>([]);
+  const [claimerSearch, setClaimerSearch] = useState('');
+  const claimerCombobox = useCombobox();
 
   useEffect(() => {
     let active = true;
@@ -48,19 +52,35 @@ export function ClaimFormPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    fetchClaimants()
+      .then((claimants: Claimant[]) => {
+        if (active) {
+          setClaimerOptions(claimants.map((c) => c.name));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filteredCrops = cropOptions.filter((name) =>
     name.toLowerCase().includes(cropSearch.toLowerCase()),
   );
 
-  const exactMatch = cropOptions.some(
+  const exactCropMatch = cropOptions.some(
     (name) => name.toLowerCase() === cropSearch.toLowerCase(),
   );
 
-  const cropOptionsRender = filteredCrops.map((name) => (
-    <Combobox.Option key={name} value={name}>
-      {name}
-    </Combobox.Option>
-  ));
+  const filteredClaimers = claimerOptions.filter((name) =>
+    name.toLowerCase().includes(claimerSearch.toLowerCase()),
+  );
+
+  const exactClaimerMatch = claimerOptions.some(
+    (name) => name.toLowerCase() === claimerSearch.toLowerCase(),
+  );
 
   const form = useForm<PlotFormValues>({
     initialValues: {
@@ -162,18 +182,61 @@ export function ClaimFormPage() {
                 withAsterisk
                 {...form.getInputProps('plot_number')}
               />
-              <TextInput
-                label="认领人"
-                placeholder="请输入认领人姓名"
-                withAsterisk
-                {...form.getInputProps('claimer')}
-              />
               <Combobox
-                store={combobox}
+                store={claimerCombobox}
+                onOptionSubmit={(value) => {
+                  form.setFieldValue('claimer', value);
+                  setClaimerSearch(value);
+                  claimerCombobox.closeDropdown();
+                }}
+              >
+                <Combobox.Target>
+                  <InputBase
+                    label="认领人"
+                    placeholder="选择或输入认领人姓名"
+                    withAsterisk
+                    rightSection={<Combobox.Chevron />}
+                    value={claimerSearch}
+                    onChange={(event) => {
+                      setClaimerSearch(event.currentTarget.value);
+                      form.setFieldValue('claimer', event.currentTarget.value);
+                      claimerCombobox.openDropdown();
+                      claimerCombobox.updateSelectedOptionIndex();
+                    }}
+                    onFocus={() => {
+                      claimerCombobox.openDropdown();
+                    }}
+                    onBlur={() => {
+                      claimerCombobox.closeDropdown();
+                    }}
+                    error={form.errors.claimer}
+                  />
+                </Combobox.Target>
+
+                <Combobox.Dropdown>
+                  <Combobox.Options>
+                    {filteredClaimers.map((name) => (
+                      <Combobox.Option key={name} value={name}>
+                        {name}
+                      </Combobox.Option>
+                    ))}
+                    {!exactClaimerMatch && claimerSearch.trim() && (
+                      <Combobox.Option value={claimerSearch}>
+                        新增认领人 "{claimerSearch}"
+                      </Combobox.Option>
+                    )}
+                    {filteredClaimers.length === 0 && !claimerSearch.trim() && (
+                      <Combobox.Empty>暂无认领人数据</Combobox.Empty>
+                    )}
+                  </Combobox.Options>
+                </Combobox.Dropdown>
+              </Combobox>
+              <Combobox
+                store={cropCombobox}
                 onOptionSubmit={(value) => {
                   form.setFieldValue('crop', value);
                   setCropSearch(value);
-                  combobox.closeDropdown();
+                  cropCombobox.closeDropdown();
                 }}
               >
                 <Combobox.Target>
@@ -186,14 +249,14 @@ export function ClaimFormPage() {
                     onChange={(event) => {
                       setCropSearch(event.currentTarget.value);
                       form.setFieldValue('crop', event.currentTarget.value);
-                      combobox.openDropdown();
-                      combobox.updateSelectedOptionIndex();
+                      cropCombobox.openDropdown();
+                      cropCombobox.updateSelectedOptionIndex();
                     }}
                     onFocus={() => {
-                      combobox.openDropdown();
+                      cropCombobox.openDropdown();
                     }}
                     onBlur={() => {
-                      combobox.closeDropdown();
+                      cropCombobox.closeDropdown();
                     }}
                     error={form.errors.crop}
                   />
@@ -201,8 +264,12 @@ export function ClaimFormPage() {
 
                 <Combobox.Dropdown>
                   <Combobox.Options>
-                    {cropOptionsRender}
-                    {!exactMatch && cropSearch.trim() && (
+                    {filteredCrops.map((name) => (
+                      <Combobox.Option key={name} value={name}>
+                        {name}
+                      </Combobox.Option>
+                    ))}
+                    {!exactCropMatch && cropSearch.trim() && (
                       <Combobox.Option value={cropSearch}>
                         新增自定义作物 "{cropSearch}"
                       </Combobox.Option>

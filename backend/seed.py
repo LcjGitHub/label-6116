@@ -1,6 +1,6 @@
 from datetime import date
 
-from models import Announcement, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
+from models import Announcement, Claimant, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 
 SEED_DATA = [
     {
@@ -289,6 +289,15 @@ SEED_ANNOUNCEMENTS = [
     },
 ]
 
+SEED_CLAIMANTS = [
+    {"code": "R001", "name": "张三", "phone": "13800001001", "remark": None},
+    {"code": "R002", "name": "李四", "phone": "13800001002", "remark": None},
+    {"code": "R003", "name": "王五", "phone": "13800001003", "remark": None},
+    {"code": "R004", "name": "赵六", "phone": "13800001004", "remark": None},
+    {"code": "R005", "name": "孙七", "phone": "13800001005", "remark": None},
+    {"code": "R006", "name": "周八", "phone": "13800001006", "remark": None},
+]
+
 
 def seed_database():
     plots_seeded = False
@@ -346,4 +355,9 @@ def seed_database():
     if Announcement.query.count() == 0:
         for item in SEED_ANNOUNCEMENTS:
             db.session.add(Announcement(**item))
+        db.session.commit()
+
+    if Claimant.query.count() == 0:
+        for item in SEED_CLAIMANTS:
+            db.session.add(Claimant(**item))
         db.session.commit()

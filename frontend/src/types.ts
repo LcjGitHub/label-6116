@@ -149,3 +149,18 @@ export interface AnnouncementFormValues {
   content: string;
   is_pinned: boolean;
 }
+
+export interface Claimant {
+  id: number;
+  code: string;
+  name: string;
+  phone: string;
+  remark: string | null;
+}
+
+export interface ClaimantFormValues {
+  code: string;
+  name: string;
+  phone: string;
+  remark: string;
+}

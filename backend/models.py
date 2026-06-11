@@ -163,6 +163,25 @@ class PestReport(db.Model):
         }
 
 
+class Claimant(db.Model):
+    __tablename__ = "claimants"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(32), unique=True, nullable=False)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    phone = db.Column(db.String(32), nullable=False, default="")
+    remark = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "code": self.code,
+            "name": self.name,
+            "phone": self.phone,
+            "remark": self.remark,
+        }
+
+
 class Announcement(db.Model):
     __tablename__ = "announcements"
 

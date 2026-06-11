@@ -4,11 +4,12 @@ from datetime import datetime, timedelta, date
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from models import PLOT_STATUSES, Announcement, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
+from models import PLOT_STATUSES, Announcement, Claimant, Crop, FertilizationRecord, HarvestRecord, PestReport, PlantingLog, Plot, db
 from seed import seed_database
 from validators import (
     validate_announcement_payload,
     validate_batch_delete_payload,
+    validate_claimant_payload,
     validate_crop_payload,
     validate_fertilization_payload,
     validate_harvest_payload,
@@ -379,6 +380,37 @@ def create_crop():
     db.session.add(crop)
     db.session.commit()
     return jsonify(crop.to_dict()), 201
+
+
+@app.route("/api/claimants", methods=["GET"])
+def list_claimants():
+    query = Claimant.query
+
+    name = request.args.get("name", "").strip()
+    if name:
+        query = query.filter(Claimant.name.contains(name))
+
+    claimants = query.order_by(Claimant.code).all()
+    return jsonify([claimant.to_dict() for claimant in claimants])
+
+
+@app.route("/api/claimants", methods=["POST"])
+def create_claimant():
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = validate_claimant_payload(data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if Claimant.query.filter_by(code=payload["code"]).first():
+        return jsonify({"error": "编号已存在"}), 409
+    if Claimant.query.filter_by(name=payload["name"]).first():
+        return jsonify({"error": "姓名已存在"}), 409
+
+    claimant = Claimant(**payload)
+    db.session.add(claimant)
+    db.session.commit()
+    return jsonify(claimant.to_dict()), 201
 
 
 @app.route("/api/announcements", methods=["GET"])

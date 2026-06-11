@@ -339,6 +339,34 @@ def validate_treatment_status_payload(data):
     return {"treatment_status": treatment_status}
 
 
+def validate_claimant_payload(data):
+    required_fields = ["code", "name", "phone"]
+    missing = [field for field in required_fields if not data.get(field, "").strip()]
+    if missing:
+        raise ValueError(f"缺少必填字段: {', '.join(missing)}")
+
+    payload = {}
+    payload["code"] = (data.get("code") or "").strip()
+    if not payload["code"]:
+        raise ValueError("编号不能为空")
+
+    payload["name"] = (data.get("name") or "").strip()
+    if not payload["name"]:
+        raise ValueError("姓名不能为空")
+
+    payload["phone"] = (data.get("phone") or "").strip()
+    if not payload["phone"]:
+        raise ValueError("联系电话不能为空")
+
+    remark = data.get("remark")
+    if remark is not None:
+        payload["remark"] = str(remark).strip() or None
+    else:
+        payload["remark"] = None
+
+    return payload
+
+
 def validate_announcement_payload(data):
     required_fields = ["title", "content", "publish_date"]
     missing = [field for field in required_fields if data.get(field) is None or str(data.get(field)).strip() == ""]

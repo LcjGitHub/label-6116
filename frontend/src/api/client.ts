@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type {
   Announcement,
+  Claimant,
   Crop,
   FertilizationRecord,
   HarvestRecord,
@@ -165,4 +166,19 @@ export async function createAnnouncement(payload: {
 
 export async function deleteAnnouncement(id: number): Promise<void> {
   await api.delete(`/announcements/${id}`);
+}
+
+export async function fetchClaimants(params?: { name?: string }): Promise<Claimant[]> {
+  const { data } = await api.get<Claimant[]>('/claimants', { params });
+  return data;
+}
+
+export async function createClaimant(payload: {
+  code: string;
+  name: string;
+  phone: string;
+  remark?: string;
+}): Promise<Claimant> {
+  const { data } = await api.post<Claimant>('/claimants', payload);
+  return data;
 }
