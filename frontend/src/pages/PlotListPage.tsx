@@ -49,7 +49,7 @@ function getStatusColor(status: PlotStatus): string {
 }
 
 export function PlotListPage() {
-  const { claimer, crop, status, setClaimer, setCrop, setStatus, reset } = useFilterStore();
+  const { plotNumber, claimer, crop, status, setPlotNumber, setClaimer, setCrop, setStatus, reset } = useFilterStore();
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +61,7 @@ export function PlotListPage() {
   const [batchDeleteModalOpen, setBatchDeleteModalOpen] = useState(false);
   const [batchDeleteSubmitting, setBatchDeleteSubmitting] = useState(false);
   const [batchDeleteError, setBatchDeleteError] = useState<string | null>(null);
+  const [debouncedPlotNumber] = useDebouncedValue(plotNumber, 300);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
 
@@ -99,6 +100,7 @@ export function PlotListPage() {
     setError(null);
     try {
       const data = await fetchPlots({
+        plot_number: debouncedPlotNumber || undefined,
         claimer: debouncedClaimer || undefined,
         crop: debouncedCrop || undefined,
         status: status || undefined,
@@ -109,7 +111,7 @@ export function PlotListPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedClaimer, debouncedCrop, status]);
+  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status]);
 
   useEffect(() => {
     loadPlots();
@@ -117,7 +119,7 @@ export function PlotListPage() {
 
   useEffect(() => {
     setSelectedIds([]);
-  }, [debouncedClaimer, debouncedCrop, status]);
+  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status]);
 
   const handleDelete = (plot: Plot) => {
     setDeletingPlot(plot);
@@ -283,6 +285,13 @@ export function PlotListPage() {
 
         <Paper withBorder p="md" radius="md">
           <Group align="flex-end">
+            <TextInput
+              label="地块编号"
+              placeholder="筛选地块编号"
+              value={plotNumber}
+              onChange={(event) => setPlotNumber(event.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
             <TextInput
               label="认领人"
               placeholder="筛选认领人"

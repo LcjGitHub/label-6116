@@ -8,7 +8,7 @@ const api = axios.create({
   },
 });
 
-export async function fetchPlots(params?: { claimer?: string; crop?: string; status?: PlotStatus }): Promise<Plot[]> {
+export async function fetchPlots(params?: { plot_number?: string; claimer?: string; crop?: string; status?: PlotStatus }): Promise<Plot[]> {
   const { data } = await api.get<Plot[]>('/plots', { params });
   return data;
 }

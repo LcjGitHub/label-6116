@@ -80,10 +80,13 @@ def validate_plot_payload(data, partial=False):
 def list_plots():
     query = Plot.query
 
+    plot_number = request.args.get("plot_number", "").strip()
     claimer = request.args.get("claimer", "").strip()
     crop = request.args.get("crop", "").strip()
     status = request.args.get("status", "").strip()
 
+    if plot_number:
+        query = query.filter(Plot.plot_number.contains(plot_number))
     if claimer:
         query = query.filter(Plot.claimer.contains(claimer))
     if crop:
