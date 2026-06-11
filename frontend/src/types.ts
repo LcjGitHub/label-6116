@@ -21,6 +21,14 @@ export interface PlotFormValues {
   status: PlotStatus;
 }
 
+export interface UpdatePlotPayload {
+  plot_number: string;
+  claimer: string;
+  crop: string;
+  claim_date: string;
+  expected_harvest_date: string;
+}
+
 export interface HarvestRecord {
   id: number;
   plot_id: number;

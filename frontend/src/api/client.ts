@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Crop, HarvestRecord, PlantingLog, Plot, PlotStatus, Statistics } from '../types';
+import type { Crop, HarvestRecord, PlantingLog, Plot, PlotStatus, Statistics, UpdatePlotPayload } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
@@ -27,6 +27,11 @@ export async function createPlot(payload: {
 
 export async function deletePlot(id: number): Promise<void> {
   await api.delete(`/plots/${id}`);
+}
+
+export async function updatePlot(id: number, payload: UpdatePlotPayload): Promise<Plot> {
+  const { data } = await api.put<Plot>(`/plots/${id}`, payload);
+  return data;
 }
 
 export async function fetchHarvestRecords(params?: { plot_id?: number }): Promise<HarvestRecord[]> {

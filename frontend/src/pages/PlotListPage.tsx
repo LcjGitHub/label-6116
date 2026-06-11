@@ -2,9 +2,12 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Combobox,
   Container,
   Group,
+  InputBase,
   Loader,
+  Modal,
   Paper,
   Select,
   Stack,
@@ -12,15 +15,20 @@ import {
   Text,
   TextInput,
   Title,
+  useCombobox,
 } from '@mantine/core';
+import { DateInput } from '@mantine/dates';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconFileText, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import { useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
+import { IconFileText, IconPencil, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deletePlot, fetchPlots } from '../api/client';
+import { deletePlot, fetchCrops, fetchPlots, updatePlot } from '../api/client';
 import { useFilterStore } from '../store/filterStore';
 import { PLOT_STATUSES } from '../types';
-import type { Plot, PlotStatus } from '../types';
+import type { Crop, Plot, PlotFormValues, PlotStatus } from '../types';
 
 function formatDate(value: string) {
   return value;
@@ -47,6 +55,35 @@ export function PlotListPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [cropOptions, setCropOptions] = useState<string[]>([]);
+  const [cropSearch, setCropSearch] = useState('');
+  const editCombobox = useCombobox();
+
+  const editForm = useForm<PlotFormValues>({
+    initialValues: {
+      plot_number: '',
+      claimer: '',
+      crop: '',
+      claim_date: null,
+      expected_harvest_date: null,
+      status: '种植中',
+    },
+    validate: {
+      plot_number: (value) => (value.trim() ? null : '请输入地块编号'),
+      claimer: (value) => (value.trim() ? null : '请输入认领人'),
+      crop: (value) => (value.trim() ? null : '请输入作物'),
+      claim_date: (value) => (value ? null : '请选择认领日期'),
+      expected_harvest_date: (value, values) => {
+        if (!value) return '请选择预计收获日';
+        if (values.claim_date && value < values.claim_date) return '预计收获日不能早于认领日期';
+        return null;
+      },
+    },
+  });
 
   const loadPlots = useCallback(async () => {
     setLoading(true);
@@ -80,6 +117,69 @@ export function PlotListPage() {
       setDeletingId(null);
     }
   };
+
+  const handleOpenEdit = useCallback(async (plot: Plot) => {
+    setEditingPlot(plot);
+    setCropSearch(plot.crop);
+    editForm.setValues({
+      plot_number: plot.plot_number,
+      claimer: plot.claimer,
+      crop: plot.crop,
+      claim_date: dayjs(plot.claim_date).toDate(),
+      expected_harvest_date: dayjs(plot.expected_harvest_date).toDate(),
+      status: plot.status,
+    });
+    editForm.resetDirty();
+    setEditModalOpen(true);
+    try {
+      const crops = await fetchCrops();
+      setCropOptions(crops.map((c: Crop) => c.name));
+    } catch {
+      setCropOptions([]);
+    }
+  }, [editForm]);
+
+  const handleCloseEdit = useCallback(() => {
+    setEditModalOpen(false);
+    setEditingPlot(null);
+    editForm.reset();
+  }, [editForm]);
+
+  const handleEditSubmit = useCallback(async (values: PlotFormValues) => {
+    if (!editingPlot) return;
+    setEditSubmitting(true);
+    try {
+      await updatePlot(editingPlot.id, {
+        plot_number: values.plot_number.trim(),
+        claimer: values.claimer.trim(),
+        crop: values.crop.trim(),
+        claim_date: dayjs(values.claim_date).format('YYYY-MM-DD'),
+        expected_harvest_date: dayjs(values.expected_harvest_date).format('YYYY-MM-DD'),
+      });
+      notifications.show({ title: '编辑成功', message: '认领信息已更新', color: 'green' });
+      setEditModalOpen(false);
+      setEditingPlot(null);
+      editForm.reset();
+      await loadPlots();
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err && err.response &&
+        typeof err.response === 'object' && 'data' in err.response && err.response.data &&
+        typeof err.response.data === 'object' && 'error' in err.response.data
+          ? String(err.response.data.error)
+          : '更新失败，请稍后重试';
+      notifications.show({ title: '编辑失败', message, color: 'red' });
+    } finally {
+      setEditSubmitting(false);
+    }
+  }, [editingPlot, editForm, loadPlots]);
+
+  const filteredCrops = cropOptions.filter((name) =>
+    name.toLowerCase().includes(cropSearch.toLowerCase()),
+  );
+  const exactMatch = cropOptions.some(
+    (name) => name.toLowerCase() === cropSearch.toLowerCase(),
+  );
 
   const statusOptions = [
     { value: '', label: '全部' },
@@ -185,6 +285,15 @@ export function PlotListPage() {
                         </ActionIcon>
                         <ActionIcon
                           variant="subtle"
+                          color="orange"
+                          aria-label="编辑"
+                          title="编辑认领信息"
+                          onClick={() => handleOpenEdit(plot)}
+                        >
+                          <IconPencil size={16} />
+                        </ActionIcon>
+                        <ActionIcon
+                          variant="subtle"
                           color="red"
                           aria-label="删除"
                           loading={deletingId === plot.id}
@@ -201,6 +310,96 @@ export function PlotListPage() {
           )}
         </Paper>
       </Stack>
+
+      <Modal
+        opened={editModalOpen}
+        onClose={handleCloseEdit}
+        title="编辑认领信息"
+        size="sm"
+      >
+        <form onSubmit={editForm.onSubmit(handleEditSubmit)}>
+          <Stack gap="md">
+            <TextInput
+              label="地块编号"
+              placeholder="例如 A-03"
+              withAsterisk
+              {...editForm.getInputProps('plot_number')}
+            />
+            <TextInput
+              label="认领人"
+              placeholder="请输入认领人姓名"
+              withAsterisk
+              {...editForm.getInputProps('claimer')}
+            />
+            <Combobox
+              store={editCombobox}
+              onOptionSubmit={(value) => {
+                editForm.setFieldValue('crop', value);
+                setCropSearch(value);
+                editCombobox.closeDropdown();
+              }}
+            >
+              <Combobox.Target>
+                <InputBase
+                  label="作物"
+                  placeholder="选择或输入作物名称"
+                  withAsterisk
+                  rightSection={<Combobox.Chevron />}
+                  value={cropSearch}
+                  onChange={(event) => {
+                    setCropSearch(event.currentTarget.value);
+                    editForm.setFieldValue('crop', event.currentTarget.value);
+                    editCombobox.openDropdown();
+                    editCombobox.updateSelectedOptionIndex();
+                  }}
+                  onFocus={() => editCombobox.openDropdown()}
+                  onBlur={() => editCombobox.closeDropdown()}
+                  error={editForm.errors.crop}
+                />
+              </Combobox.Target>
+              <Combobox.Dropdown>
+                <Combobox.Options>
+                  {filteredCrops.map((name) => (
+                    <Combobox.Option key={name} value={name}>
+                      {name}
+                    </Combobox.Option>
+                  ))}
+                  {!exactMatch && cropSearch.trim() && (
+                    <Combobox.Option value={cropSearch}>
+                      新增自定义作物 "{cropSearch}"
+                    </Combobox.Option>
+                  )}
+                  {filteredCrops.length === 0 && !cropSearch.trim() && (
+                    <Combobox.Empty>暂无作物数据</Combobox.Empty>
+                  )}
+                </Combobox.Options>
+              </Combobox.Dropdown>
+            </Combobox>
+            <DateInput
+              label="认领日期"
+              placeholder="选择认领日期"
+              valueFormat="YYYY-MM-DD"
+              withAsterisk
+              {...editForm.getInputProps('claim_date')}
+            />
+            <DateInput
+              label="预计收获日"
+              placeholder="选择预计收获日"
+              valueFormat="YYYY-MM-DD"
+              withAsterisk
+              {...editForm.getInputProps('expected_harvest_date')}
+            />
+            <Group justify="flex-end" mt="md">
+              <Button variant="subtle" onClick={handleCloseEdit}>
+                取消
+              </Button>
+              <Button type="submit" loading={editSubmitting}>
+                保存修改
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Modal>
     </Container>
   );
 }
