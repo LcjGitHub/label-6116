@@ -84,6 +84,8 @@ def list_plots():
     claimer = request.args.get("claimer", "").strip()
     crop = request.args.get("crop", "").strip()
     status = request.args.get("status", "").strip()
+    start_date_str = request.args.get("start_date", "").strip()
+    end_date_str = request.args.get("end_date", "").strip()
 
     if plot_number:
         query = query.filter(Plot.plot_number.contains(plot_number))
@@ -93,6 +95,18 @@ def list_plots():
         query = query.filter(Plot.crop.contains(crop))
     if status:
         query = query.filter(Plot.status == status)
+    if start_date_str:
+        try:
+            start_date_val = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            query = query.filter(Plot.claim_date >= start_date_val)
+        except ValueError:
+            pass
+    if end_date_str:
+        try:
+            end_date_val = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            query = query.filter(Plot.claim_date <= end_date_val)
+        except ValueError:
+            pass
 
     plots = query.order_by(Plot.plot_number).all()
     return jsonify([plot.to_dict() for plot in plots])

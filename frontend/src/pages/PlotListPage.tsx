@@ -49,7 +49,7 @@ function getStatusColor(status: PlotStatus): string {
 }
 
 export function PlotListPage() {
-  const { plotNumber, claimer, crop, status, setPlotNumber, setClaimer, setCrop, setStatus, reset } = useFilterStore();
+  const { plotNumber, claimer, crop, status, startDate, endDate, setPlotNumber, setClaimer, setCrop, setStatus, setStartDate, setEndDate, reset } = useFilterStore();
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +64,8 @@ export function PlotListPage() {
   const [debouncedPlotNumber] = useDebouncedValue(plotNumber, 300);
   const [debouncedClaimer] = useDebouncedValue(claimer, 300);
   const [debouncedCrop] = useDebouncedValue(crop, 300);
+  const [debouncedStartDate] = useDebouncedValue(startDate, 300);
+  const [debouncedEndDate] = useDebouncedValue(endDate, 300);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
@@ -104,6 +106,8 @@ export function PlotListPage() {
         claimer: debouncedClaimer || undefined,
         crop: debouncedCrop || undefined,
         status: status || undefined,
+        start_date: debouncedStartDate || undefined,
+        end_date: debouncedEndDate || undefined,
       });
       setPlots(data);
     } catch {
@@ -111,7 +115,7 @@ export function PlotListPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status]);
+  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status, debouncedStartDate, debouncedEndDate]);
 
   useEffect(() => {
     loadPlots();
@@ -119,7 +123,7 @@ export function PlotListPage() {
 
   useEffect(() => {
     setSelectedIds([]);
-  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status]);
+  }, [debouncedPlotNumber, debouncedClaimer, debouncedCrop, status, debouncedStartDate, debouncedEndDate]);
 
   const handleDelete = (plot: Plot) => {
     setDeletingPlot(plot);
@@ -312,6 +316,24 @@ export function PlotListPage() {
               value={status}
               onChange={(value) => setStatus((value as PlotStatus | '') || '')}
               data={statusOptions}
+              style={{ flex: 1 }}
+            />
+            <DateInput
+              label="认领开始日期"
+              placeholder="选择开始日期"
+              valueFormat="YYYY-MM-DD"
+              value={startDate ? dayjs(startDate).toDate() : null}
+              onChange={(value) => setStartDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+              clearable
+              style={{ flex: 1 }}
+            />
+            <DateInput
+              label="认领结束日期"
+              placeholder="选择结束日期"
+              valueFormat="YYYY-MM-DD"
+              value={endDate ? dayjs(endDate).toDate() : null}
+              onChange={(value) => setEndDate(value ? dayjs(value).format('YYYY-MM-DD') : '')}
+              clearable
               style={{ flex: 1 }}
             />
             <Button variant="light" leftSection={<IconRefresh size={16} />} onClick={reset}>
